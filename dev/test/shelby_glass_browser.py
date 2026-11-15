@@ -48,8 +48,14 @@ async def run_engine(pw, engine, args):
         mock = mock.replace(old, new)
 
     async def api_reply(method, path, query, body):
+        if path == '/api/app' and method == 'POST':
+            # The click can finish before this threaded fixture receives/processes the POST.
+            # Keep nonzero latency so an immediate Python-list assertion cannot pass by luck.
+            await asyncio.sleep(0.25)
+            if not mode['paired']:
+                return {'status': 401, 'type': 'application/json', 'body': '{"error":"not paired"}'}
         if method == 'POST':
-            calls.append({'path': path, 'body': json.loads(body or '{}')})
+            calls.append({'path': path, 'body': json.loads(body or '{}'), 'authenticated': mode['paired']})
         if path == '/api/state' and not mode['paired']:
             return {'status': 401, 'type': 'application/json', 'body': '{"error":"not paired","name":"PRISM+ Google TV"}'}
         if path == '/api/playing' and mode['media']:
@@ -209,8 +215,20 @@ async def run_engine(pw, engine, args):
             await page.locator('#kbdbtn').click()
             assert await page.locator('#quick [data-pkg="com.google.android.youtube.tv"]').get_attribute('aria-label') == 'YouTube'
             await page.locator('#quickq').fill('YouTube')
-            await page.locator('#quick .tile:visible').first.click()
-            assert any(c['path'] == '/api/app' and c['body'].get('link') == 'com.google.android.youtube.tv' for c in calls), 'Shortcut action disconnected'
+            shortcut = page.locator('#quick .tile:visible')
+            assert await shortcut.count() == 1, 'Search did not isolate YouTube'
+            assert await shortcut.get_attribute('data-pkg') == 'com.google.android.youtube.tv'
+            for activation in ('click', 'tap'):
+                before = len(calls)
+                # Register before activation; click/tap completion is not HTTP completion.
+                async with page.expect_response(lambda r: r.url == ORIGIN + '/api/app' and r.request.method == 'POST', timeout=10000) as pending:
+                    await getattr(shortcut, activation)()
+                response = await pending.value
+                assert response.request.post_data_json == {'link': 'com.google.android.youtube.tv'}, 'Wrong shortcut payload'
+                assert response.status == 200 and (await response.json()).get('ok') is True, 'Shortcut request rejected'
+                launched = [c for c in calls[before:] if c['path'] == '/api/app']
+                assert launched == [{'path': '/api/app', 'body': {'link': 'com.google.android.youtube.tv'}, 'authenticated': True}], 'Shortcut action disconnected'
+
             await page.locator('#quickq').fill('')
             await page.locator('.shelby-utilities > summary').click()
             await page.locator('#morebtn').click()
@@ -253,6 +271,8 @@ async def run_engine(pw, engine, args):
     page = await page_at(390)
     await page.locator('#pair').wait_for(state='visible')
     assert not await page.locator('.rc .dpad').is_visible()
+    rejected = await page.request.post(ORIGIN + '/api/app', data={'link': 'com.google.android.youtube.tv'})
+    assert rejected.status == 401, 'Unpaired fixture accepted an app launch'
     await page.screenshot(path=args.out / f'shelby-glass-{engine}-pairing.png', full_page=True)
     await page.close()
     mode.update(paired=True, core='pc')
