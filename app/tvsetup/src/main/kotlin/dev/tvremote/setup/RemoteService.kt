@@ -840,7 +840,7 @@ class RemoteService : Service(), Tv.Listener, HttpServer.Handler {
         try { version = packageManager.getPackageInfo(packageName, 0).versionName } catch (ignored: Exception) { }
         return JSONObject().put("core", "tv").put("host", host).put("name", Build.MODEL).put("connected", true).put("is_on", pm.isInteractive).put("paired", true)
             .put("device", JSONObject().put("manufacturer", Build.MANUFACTURER).put("model", Build.MODEL).put("android", Build.VERSION.RELEASE))
-            .put("version", version).put("app_name", "TV Setup")
+            .put("version", version).put("app_name", "Shelby+ Remote")
             .put("released", try { getString(resources.getIdentifier("released", "string", packageName)).split("-").let { it[2] + "/" + it[1] + "/" + it[0] } } catch (e: Exception) { "" })
             .put("adb", JSONObject().put("state", adbWord()).put("detail", adbDetail)
                 .put("pair", Build.VERSION.SDK_INT >= 30 && manage?.canPair == true))   // Wireless debugging (Android 11+): the page offers to type its code

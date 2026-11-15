@@ -1,0 +1,11 @@
+// Test-only ABI override for the Android TV x86 emulator. Never used for shipped release builds.
+gradle.beforeProject { p ->
+    if (p.path == ':tvsetup') {
+        p.pluginManager.withPlugin('com.android.application') {
+            p.extensions.getByName('androidComponents').finalizeDsl { android ->
+                android.defaultConfig.ndk.abiFilters.clear()
+                android.defaultConfig.ndk.abiFilters.add('x86')
+            }
+        }
+    }
+}

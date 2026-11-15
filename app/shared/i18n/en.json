@@ -2235,7 +2235,6 @@
  "tv_main.remove_tv_setup": "Remove TV Setup",
  "tv_main.needs_adb_turn_on": "✗ Needs ADB: turn on Debugging first.",
  "tv_main.checking_for_a_new": "Checking for a new version...",
- "tv_main.installing_tv_setup_opens": "Installing. TV Setup opens again in about half a minute.",
  "tv_main.control_from_a_phone": "Control from a phone",
  "tv_main.the_tv_has_no": "The TV has no network: connect it to Wi-Fi.",
  "tv_main.off": "Off.",
@@ -2503,8 +2502,6 @@
  "tv_main.update_to": "Update to {v}",
  "tv_main.update_from": "Now on {v} · select to install",
  "tv_main.update_check": "Check for updates",
- "tv_main.version_bad_back": "⚠ Version {v} did not work on this TV, so TV Setup went back to this one. Wait for the next version.",
- "tv_main.downloading_version": "Downloading version {v}...",
  "tv_main.updated_to": "✓ Updated to version {v}.",
  "tv_main.rolled_back": "⚠️ Version {v} did not work on this TV, so TV Setup went back to version {old}. Timers, pairings and settings are all still here.",
  "tv_main.version_shaky": "⚠️ Version {v} may not work well on this TV. If something is wrong, reinstall TV Setup from the TV Remote app.",
@@ -4853,5 +4850,9 @@
  "home.multi_dbl": "Double press",
  "home.multi_hold": "Hold",
  "home.multi_none": "Not set",
- "core.need_keymulti": "a double press or hold on a remote key"
+ "core.need_keymulti": "a double press or hold on a remote key",
+ "shelby_update.not_ready": "Updates are not ready for this build. Install a trusted release first.",
+ "shelby_update.ask": "Download and verify this Shelby+ update? Android will ask before installation.",
+ "shelby_update.rejected": "No verified update is available, or verification failed. Nothing was installed.",
+ "shelby_update.installer_blocked": "Android blocked this installer. Use the verified release APK through your usual installer."
 }

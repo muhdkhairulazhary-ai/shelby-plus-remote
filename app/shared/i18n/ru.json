@@ -2291,7 +2291,6 @@
  "tv_main.remove_tv_setup": "Удалить TV Setup",
  "tv_main.needs_adb_turn_on": "✗ Нужен ADB: сначала включите отладку.",
  "tv_main.checking_for_a_new": "Проверяем новую версию…",
- "tv_main.installing_tv_setup_opens": "Установка. TV Setup откроется снова примерно через полминуты.",
  "tv_main.control_from_a_phone": "Управление с телефона",
  "tv_main.the_tv_has_no": "У ТВ нет сети: подключите к Wi‑Fi.",
  "tv_main.off": "Выкл.",
@@ -2559,8 +2558,6 @@
  "tv_main.update_to": "Обновить до {v}",
  "tv_main.update_from": "Сейчас {v} · выбрать для установки",
  "tv_main.update_check": "Проверить обновления",
- "tv_main.version_bad_back": "⚠ Версия {v} не заработала на этом ТВ, поэтому TV Setup вернулся на эту. Дождитесь следующей версии.",
- "tv_main.downloading_version": "Скачиваем версию {v}…",
  "tv_main.updated_to": "✓ Обновлено до версии {v}.",
  "tv_main.rolled_back": "⚠️ Версия {v} не заработала на этом ТВ, поэтому TV Setup вернулся на {old}. Таймеры, сопряжения и настройки на месте.",
  "tv_main.version_shaky": "⚠️ Версия {v} может плохо работать на этом ТВ. Если что-то не так — переустановите TV Setup из приложения TV Remote.",
@@ -4957,5 +4954,9 @@
  "home.multi_dbl": "Двойное нажатие",
  "home.multi_hold": "Удержание",
  "home.multi_none": "Не задано",
- "core.need_keymulti": "двойное нажатие или удержание кнопки пульта"
+ "core.need_keymulti": "двойное нажатие или удержание кнопки пульта",
+ "shelby_update.not_ready": "Обновления для этой сборки ещё не настроены. Сначала установите доверенную версию.",
+ "shelby_update.ask": "Загрузить и проверить обновление Shelby+? Перед установкой Android запросит подтверждение.",
+ "shelby_update.rejected": "Проверенного обновления нет или проверка не пройдена. Ничего не установлено.",
+ "shelby_update.installer_blocked": "Android заблокировал установку. Откройте проверенный APK в привычном установщике."
 }

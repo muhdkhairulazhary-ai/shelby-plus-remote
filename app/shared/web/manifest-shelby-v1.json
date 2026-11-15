@@ -1,0 +1,15 @@
+{
+  "name": "Shelby+ Remote",
+  "short_name": "Shelby+ Remote",
+  "description": "Your TV. Your Control.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "icons": [
+    { "src": "icon-shelby192v1.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-shelby512v1.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-shelbymaskablev1.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

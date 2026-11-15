@@ -1,0 +1,134 @@
+name: Shelby+ Remote TV APK
+on:
+  push:
+    branches: [main, 'feat/shelby-plus-*']
+    paths: ['app/tvsetup/**', 'app/tvkeys/**', 'app/shared/**', 'app/gradle/**', '.github/workflows/tv-apk.yml']
+  pull_request:
+    paths: ['app/tvsetup/**', 'app/tvkeys/**', 'app/shared/**', 'app/gradle/**', '.github/workflows/tv-apk.yml']
+  workflow_dispatch:
+    inputs:
+      verify_persistent_signing:
+        description: Verify protected permanent signing without publishing
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: tv-apk-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install Android build dependencies
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Check official TV branding
+        run: |
+          python3 -m pip install Pillow==12.0.0
+          python3 dev/gen/shelby_art.py --check
+      - name: Signing policy checks
+        run: python3 dev/release/test_shelby_signing.py
+      - name: Web checks
+        run: node --test app/shared/tests/*.test.js
+      - name: Build signed test APK and bundled keys add-on
+        # Both APKs must use the same key for their signature permission.
+        # This ephemeral CI key is for fresh test installations, not release updates.
+        env:
+          SHELBY_TEST_BUILD: '1'
+        run: app/tvsetup/build.sh
+      - name: Verify validation APK and bundled add-on signatures
+        run: |
+          mkdir -p validation-evidence
+          unzip -p app/tvsetup/build/tv-setup.apk assets/tvkeys.apk > "$RUNNER_TEMP/validation-addon.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/tvsetup/build/tv-setup.apk > validation-evidence/SIGNING-CERTIFICATE.txt
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/validation-addon.apk" > "$RUNNER_TEMP/validation-addon.txt"
+          python3 - <<'PYCODE'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'dev/release')
+          import shelby_release as release
+          main=Path('validation-evidence/SIGNING-CERTIFICATE.txt').read_text()
+          addon=Path(__import__('os').environ['RUNNER_TEMP'])/'validation-addon.txt'
+          pin=release.certificate(main)
+          assert release.identity(main,addon.read_text(),pin,main,False,False)
+          import zipfile
+          with zipfile.ZipFile('app/tvsetup/build/tv-setup.apk') as apk:
+              assert apk.read('assets/LICENSE') == Path('LICENSE').read_bytes()
+          print('Validation APK v1/v2, matching add-on signer and MIT attribution verified.')
+          PYCODE
+      - name: Kotlin tests and API lint
+        working-directory: app/gradle
+        run: ./gradlew --no-daemon :shared:testDebugUnitTest :tvsetup:testDebugUnitTest :shared:lintDebug :tvsetup:lintDebug
+      - name: Prepare download
+        run: |
+          mkdir -p artifact
+          cp app/tvsetup/build/tv-setup.apk artifact/shelby-plus-remote-tv.apk
+          cp validation-evidence/SIGNING-CERTIFICATE.txt artifact/
+          cp LICENSE artifact/LICENSE
+          cp SHELBY.md artifact/INSTALL.md
+          cd artifact
+          sha256sum shelby-plus-remote-tv.apk > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shelby-plus-remote-tv-validation-only
+          path: artifact/
+          if-no-files-found: error
+          retention-days: 30
+
+  persistent-signing-readiness:
+    if: github.event_name == 'workflow_dispatch' && inputs.verify_persistent_signing
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: shelby-release
+    env:
+      SHELBY_TV_KEYSTORE_BASE64: ${{ secrets.SHELBY_TV_KEYSTORE_BASE64 }}
+      SHELBY_STORE_PASSWORD: ${{ secrets.SHELBY_STORE_PASSWORD }}
+      SHELBY_KEY_PASSWORD: ${{ secrets.SHELBY_KEY_PASSWORD }}
+      SHELBY_KEY_ALIAS: ${{ secrets.SHELBY_KEY_ALIAS }}
+      SHELBY_RELEASE_CERT_SHA256: ${{ vars.SHELBY_RELEASE_CERT_SHA256 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Require and verify permanent signing key
+        run: python3 dev/release/shelby_signing.py
+      - uses: android-actions/setup-android@v3
+        with: {packages: platform-tools}
+      - uses: gradle/actions/setup-gradle@v4
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build permanent-key APK without publishing
+        run: app/tvsetup/build.sh
+      - name: Verify built app and bundled add-on certificates
+        run: |
+          mkdir -p readiness
+          unzip -p app/tvsetup/build/tv-setup.apk assets/tvkeys.apk > "$RUNNER_TEMP/readiness-addon.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/tvsetup/build/tv-setup.apk > readiness/SIGNING-CERTIFICATE.txt
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/readiness-addon.apk" > "$RUNNER_TEMP/readiness-addon.txt"
+          python3 - <<'PYCODE'
+          import importlib.util, os
+          from pathlib import Path
+          spec=importlib.util.spec_from_file_location('release','dev/release/shelby_release.py')
+          release=importlib.util.module_from_spec(spec); spec.loader.exec_module(release)
+          main=Path('readiness/SIGNING-CERTIFICATE.txt').read_text()
+          addon=(Path(os.environ['RUNNER_TEMP'])/'readiness-addon.txt').read_text()
+          assert release.identity(main,addon,os.environ['SHELBY_RELEASE_CERT_SHA256'],main,True,False)
+          print('Permanent built APK and bundled add-on signer verified. No release was published.')
+          PYCODE
+      - uses: actions/upload-artifact@v4
+        with: {name: shelby-permanent-signing-readiness, path: readiness/}
+      - name: Delete private key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/shelby-release.jks" "$RUNNER_TEMP/readiness-addon.apk"

@@ -1,0 +1,76 @@
+name: TV PWA server checks
+on:
+  workflow_call:
+  push:
+    branches: ['feat/shelby-plus-*']
+    paths: ['app/shared/**', 'app/tvsetup/**', 'app/tvkeys/**', 'app/gradle/**', 'dev/test/shelby*', '.github/workflows/tv-pwa-server.yml']
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium and WebKit
+        run: |
+          python3 -m pip install playwright==1.62.0
+          python3 -m playwright install --with-deps chromium webkit
+      - name: Glass UI layouts and existing action handlers
+        run: python3 dev/test/shelby_glass_browser.py --out browser-review
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shelby-glass-review
+          path: browser-review/
+  server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install build dependencies
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build test-only x86 TV APK
+        run: app/gradle/gradlew -p app/gradle --no-daemon -I ../../dev/test/shelby-emulator.init.gradle :tvsetup:assembleDebug
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Test actual TV-hosted server on 8765
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: android-tv
+          arch: x86
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          script: |
+            adb install app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk
+            adb shell am start -n dev.tvremote.setup/.MainActivity
+            adb forward tcp:8765 tcp:8765
+            python3 dev/test/shelby_pwa_server.py > /tmp/shelby-pwa-server.txt 2>&1
+            timeout 10s adb logcat -d > /tmp/shelby-pwa-logcat.txt 2>/dev/null || true
+      - name: Collect emulator evidence
+        if: always()
+        run: |
+          mkdir -p evidence
+          cp /tmp/shelby-pwa-server.txt evidence/ 2>/dev/null || true
+          cp /tmp/shelby-pwa-logcat.txt evidence/logcat.txt 2>/dev/null || true
+          cat evidence/shelby-pwa-server.txt 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tv-pwa-server-checks
+          path: evidence/

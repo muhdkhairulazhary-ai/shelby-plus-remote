@@ -1,7 +1,6 @@
 package dev.tvremote.setup.health
 
 import android.app.usage.UsageEvents
-import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -10,28 +9,13 @@ import dev.tvremote.core.adb.Adb
 import dev.tvremote.core.ontv.Channels
 import dev.tvremote.core.ontv.Games
 import dev.tvremote.core.ontv.Home
-import dev.tvremote.core.ontv.SetupUpdate
 import dev.tvremote.core.ontv.TvApps
 import dev.tvremote.core.ontv.VoiceAddon
 import dev.tvremote.home.HomeConfig
 import dev.tvremote.setup.rules.Usage
-import dev.tvremote.update.Release
 import dev.tvremote.update.UpdatePlan
-import java.io.File
 
-/**
- * TV Setup keeps itself up to date, from RemoteService: it looks for a new version every few hours, downloads it, and installs
- * it only at a moment nobody would notice ([busy] says why not yet): the install closes TV Setup for some seconds, which stops
- * the web remote, the picture and the timers' checks meanwhile. What is on the TV's screen is not touched.
- * The install is [SetupUpdate]'s: a new version that does not start well is replaced by the old one, data and all, and never
- * tried again. Android 9 and older cannot put the old one back: there a version that fails is only noted, and the phone or
- * computer app, which sees TV Setup missing or broken, offers to install the next one (SetupBanner).
- * So TVs do not all take a release at once: each waits for its own spot within a day of it ([UpdatePlan.soakLeft]), two more
- * days on Android 10 and older, and a release pulled meanwhile never reaches the rest. "Update now" (page or TV) does not wait.
- * It also updates TV Home, TV Channels, TV Games and TV Apps when they are on the TV ([ownApps], every [UpdatePlan.CHECK], sooner when one
- * had to wait): those carry SelfUpdate but leave a new release to this for [UpdatePlan.GRACE] when HomeInfo "updates" says it is
- * on and has ADB, so their own Update popup is the exception; a copy from before SelfUpdate never asked at all.
- */
+/** Keeps separately opted-in ecosystem app updates unchanged; Shelby itself uses the manual pinned fork checker. */
 internal class AutoUpdate(private val c: Context, private val version: String, private val adb: () -> Adb?, private val busy: () -> String?) {
     companion object {
         private const val PREFS = "remote"
@@ -47,10 +31,7 @@ internal class AutoUpdate(private val c: Context, private val version: String, p
 
     private val ui = Handler(Looper.getMainLooper())
     @Volatile private var stopped = false
-    private var found: Release? = null
-    private var checkedAt = 0L
     private var appsAt = 0L
-    private var apk: File? = null
     private val dir by lazy { c.getExternalFilesDir("update") }       // shared storage: the shell, which installs it, can read it
 
     private val tick = object : Runnable {
@@ -77,49 +58,9 @@ internal class AutoUpdate(private val c: Context, private val version: String, p
         if (!on(c) && !apps) return 60 * MIN
         val now = System.currentTimeMillis()
         if (apps && now - appsAt >= UpdatePlan.CHECK) adb()?.let { a -> appsAt = if (ownApps(a)) now else now - UpdatePlan.CHECK + UpdatePlan.RETRY }   // one had to wait: again soon
-        if (!on(c)) return 20 * MIN                                   // TV Setup's own switch off: only the apps whose switch is on
-        if (found == null && now - checkedAt < UpdatePlan.CHECK) return 20 * MIN
-        if (now - checkedAt >= UpdatePlan.CHECK) {
-            checkedAt = now
-            val r = Release.newer(version, "tv", "tv-setup.apk")
-            if (r?.version != found?.version) apk = null
-            found = r
-        }
-        val r = found ?: return 20 * MIN
-        val left = UpdatePlan.soakLeft(r.published, firstSeen(r.version, now), now, installId(), android.os.Build.VERSION.SDK_INT)
-        if (left > 0) return minOf(left, 20 * MIN).coerceAtLeast(MIN)  // its spot in the spread has not come: a release pulled meanwhile never reaches this TV
-        val a = adb() ?: return 10 * MIN
-        val s = SetupUpdate.state(a)
-        if (SetupUpdate.bad(s, r.version)) return 6 * 60 * MIN        // it broke here once: wait for the next version
-        if (SetupUpdate.busy(s)) return 10 * MIN
-        if (SetupUpdate.failedLately(s, r.version, now)) {            // the TV refused it (storage full, a bad file...): not every half hour,
-            apk?.delete(); apk = null                                 // and downloaded again next time
-            return 6 * 60 * MIN                                       // after those 6 hours it tries once more (SetupUpdate.FAILED_WAIT)
-        }
-        val file = apk ?: File(dir ?: return 60 * MIN, "tv-setup-" + r.version + ".apk").also {
-            r.download(it, null)                                      // deletes what does not match its signed checksum
-            apk = it
-        }
-        if (!file.isFile) { apk = null; return 10 * MIN }
-        busy()?.let { return 10 * MIN }
-        // a phone or computer watching or controlling the TV through its own scrcpy session (ours is closed by now: see busy)
-        if (a.shell("ps -A -o ARGS 2>/dev/null | grep -c '[c]om.genymobile.scrcpy.Server'").trim().let { it != "" && it != "0" }) return 10 * MIN
-        SetupUpdate.start(a, file.absolutePath, r.version)
-        return 30 * MIN                                               // the install closes this app; this is for a failed one
-    }
-
-    /** When this TV first saw [version] (kept over restarts): the start of the spread when GitHub's published_at was not read. */
-    private fun firstSeen(version: String, now: Long): Long {
-        val p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val kept = p.getString("auto_seen", "") ?: ""
-        if (kept.substringBefore('|') == version) kept.substringAfter('|').toLongOrNull()?.takeIf { it <= now }?.let { return it }   // ahead of the clock: it went back
-        p.edit().putString("auto_seen", "$version|$now").apply()
-        return now
-    }
-
-    /** The census id (random per install, kept even with the stats off and never sent then), else ANDROID_ID: this TV's spot in [UpdatePlan.SPREAD]. */
-    private fun installId(): String = dev.tvremote.core.Census.id().ifEmpty {
-        android.provider.Settings.Secure.getString(c.contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: ""
+        // Shelby's own APK is updated only by its pinned, user-confirmed fork checker.
+        // Keep the separately opted-in upstream ecosystem updates above unchanged.
+        return 20 * MIN
     }
 
     /**

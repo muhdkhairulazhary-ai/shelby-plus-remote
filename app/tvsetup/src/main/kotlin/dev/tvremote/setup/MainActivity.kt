@@ -96,8 +96,8 @@ class MainActivity : Activity() {
     private val TILE = Color.rgb(34, 39, 47)
     private val MUTED = Color.rgb(140, 150, 163)
     private val SCRIM = Color.argb(215, 5, 7, 10)                     // behind a popup: the screen dimmed, still there
-    private val ACCENT = Color.rgb(59, 115, 246)
-    private val ACCENT_SOFT = Color.argb(64, 59, 115, 246)              // the person's bubble in Support replies, as on the phone page
+    private val ACCENT = Color.rgb(190, 42, 55)
+    private val ACCENT_SOFT = Color.argb(64, 190, 42, 55)              // the person's bubble in Support replies, as on the phone page
     private val OK = Color.rgb(70, 210, 131)
     private val WARN = Color.rgb(240, 179, 74)
     private val BAD = Color.rgb(255, 112, 112)
@@ -142,7 +142,7 @@ class MainActivity : Activity() {
         }
         /** Beside the banners, not under them (no gap to keep for a name: the log below keeps its lines): what OK does, what it is. */
         fun said(): CharSequence {
-            val act = if (app === SELF) (if (this@MainActivity.newer.isNullOrEmpty()) "TV Setup $version" + (if (this@MainActivity.newer == "") " · " + T("tv_main.up_to_date") else "") else T("tv_main.update_to", "v" to this@MainActivity.newer!!))
+            val act = if (app === SELF) (if (this@MainActivity.newer.isNullOrEmpty()) "Shelby+ Remote $version" + (if (this@MainActivity.newer == "") " · " + T("tv_main.up_to_date") else "") else T("tv_main.update_to", "v" to this@MainActivity.newer!!))
                 else newer?.let { T("eco.update", "name" to app.name, "from" to version, "to" to it) } ?: if (on) T("eco.open", "name" to app.name, "v" to version) else T("eco.get", "name" to app.name)
             return android.text.SpannableString("$act\n$sub").apply { setSpan(android.text.style.ForegroundColorSpan(TvUi.TEXT), 0, act.length, 0) }
         }
@@ -151,7 +151,7 @@ class MainActivity : Activity() {
     /** TV Setup Voice in the row too (the user, 2026-11-03: not seen there), never in [dev.tvremote.core.ontv.Bundle]: that installs by itself, this only when asked. */
     private val VOICE = dev.tvremote.core.ontv.Bundle.App("TV Setup Voice", dev.tvremote.core.ontv.VoiceAddon.PKG, "tv", dev.tvremote.core.ontv.VoiceAddon.APK) { a, d, l, p -> dev.tvremote.core.ontv.VoiceAddon.install(a, d, l, progress = p, voice = MicVoice.lang(this)) }
     /** TV Setup itself, first in the row (the user, 2026-11-03: it is one of the apps too); OK opens its Update menu, as the tile at the top. */
-    private val SELF = dev.tvremote.core.ontv.Bundle.App("TV Setup", "dev.tvremote.setup", "tv", "tv-setup.apk") { _, _, _, _ -> org.json.JSONObject() }
+    private val SELF = dev.tvremote.core.ontv.Bundle.App("Shelby+ Remote", "dev.tvremote.setup", "tv", "tv-setup.apk") { _, _, _, _ -> org.json.JSONObject() }
     private lateinit var kidsOffTile: Tile
     private var ecoNote: TextView? = null
     private var ecoWaiting: Eco? = null                               // Android's "install unknown apps" switch was opened for this one
@@ -252,7 +252,8 @@ class MainActivity : Activity() {
         val head = LinearLayout(this)
         head.gravity = Gravity.CENTER_VERTICAL
         val logo = ImageView(this)
-        logo.setImageResource(R.drawable.icon)
+        logo.setImageResource(R.drawable.shelby_icon)
+        logo.scaleType = ImageView.ScaleType.FIT_CENTER
         logo.outlineProvider = object : android.view.ViewOutlineProvider() {
             override fun getOutline(v: View, o: android.graphics.Outline) { o.setRoundRect(0, 0, v.width, v.height, resources.getDimension(R.dimen.tv_head_radius)) }
         }
@@ -262,7 +263,8 @@ class MainActivity : Activity() {
         val names = LinearLayout(this)
         names.orientation = LinearLayout.VERTICAL
         names.setPadding(resources.getDimension(R.dimen.tv_head_gap).toInt(), 0, 0, 0)
-        names.addView(text("TV Setup", if (phone) 20 else 24, TvUi.TEXT, true))
+        names.addView(text("Shelby+ Remote", if (phone) 20 else 24, TvUi.TEXT, true))
+        names.addView(text("Your TV. Your Control.", 14, TvUi.TEXT, false))
         names.addView(text("v" + version() + released().let { if (it.isEmpty()) "" else " · $it" }
             + " · Hoang Tran · tvremote.pages.dev", 12, MUTED, false).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })   // the version in use here; the Update tile says whether a newer one exists
         head.addView(names, LinearLayout.LayoutParams(0, -2, 1f))
@@ -325,7 +327,7 @@ class MainActivity : Activity() {
             val row = LinearLayout(this)
             row.clipChildren = false
             row.gravity = Gravity.CENTER_VERTICAL
-            val pics = mapOf("home" to R.drawable.eco_home, "channels" to R.drawable.eco_channels, "games" to R.drawable.eco_games, "apps" to R.drawable.eco_tvapps, "voice" to R.drawable.eco_voice, "setup" to R.drawable.banner)
+            val pics = mapOf("home" to R.drawable.eco_home, "channels" to R.drawable.eco_channels, "games" to R.drawable.eco_games, "apps" to R.drawable.eco_tvapps, "voice" to R.drawable.eco_voice, "setup" to R.drawable.shelby_banner)
             eco = (listOf(SELF) + dev.tvremote.core.ontv.Bundle.apps.let { b -> val g = b.indexOfFirst { it.pkg.endsWith(".games") }.let { if (it < 0) b.size else it }; b.take(g) + VOICE + b.drop(g) })   // TV Voice before TV Games (the user, 2026-11-03)
                 .mapNotNull { a -> pics[a.pkg.substringAfterLast('.')]?.let { Eco(a, it) } }   // an app with no banner here yet is left out
             eco.forEachIndexed { i, e -> row.addView(e, LinearLayout.LayoutParams(-2, -2).apply { if (i > 0) leftMargin = dp(14) }) }
@@ -413,12 +415,6 @@ class MainActivity : Activity() {
         if (RemoteService.enabled(this)) RemoteService.start(this)
         showWeb()
         connect()
-        Thread {                                                      // asks GitHub for the latest release, nothing else is sent
-            try {
-                val r = Release.newer(version(), "tv", "tv-setup.apk")
-                ui { newer = r?.version ?: ""; showUpdate() }
-            } catch (ignored: Exception) { ui { showUpdate() } }      // offline: the tile still checks on demand
-        }.start()
     }
 
     /** Opened by touch or by another app, nothing has the focus yet: the first arrow key lands on the first tile that works. */
@@ -457,65 +453,15 @@ class MainActivity : Activity() {
 
     private fun autoText() = if (AutoUpdate.on(this)) T("tv_main.automatic_updates_on") else T("tv_main.automatic_updates_off")
 
-    /**
-     * Downloads this app's APK from the latest GitHub release and installs it through the TV's own ADB (no "unknown sources"
-     * needed), with SetupUpdate's script: it opens this screen again once the new version runs, or the old one if it does not.
-     */
-    /** The Update tile: update now, automatic updates on or off, and removing this app, kept out of the way here. */
+    /** Manual pinned Shelby release check and the existing removal action; installation always requires user confirmation. */
     private fun updateMenu() {
         if (busy) return
-        menu("TV Setup " + version(), listOf(
-            TvUi.Item(R.drawable.ic_download, T("tv_main.update_now")) { if (adb == null) selfUpdate() else update() },
-            TvUi.Item(R.drawable.ic_refresh, T("tv_main.automatic_updates"), on = { AutoUpdate.on(this) }) { AutoUpdate.set(this, !AutoUpdate.on(this)); log(autoText()); showUpdate() },
+        menu("Shelby+ Remote " + version(), listOf(
+            TvUi.Item(R.drawable.ic_download, T("tv_main.update_now")) { shelbyUpdates.check { log(it) } },
             TvUi.Item(R.drawable.ic_trash, T("tv_main.remove_tv_setup")) { askRemove() }))
     }
 
-    private fun update() {
-        job { _ ->
-            log(T("tv_main.checking_for_a_new"))
-            val r = Release.newer(version(), "tv", "tv-setup.apk")
-            ui { newer = r?.version ?: ""; showUpdate() }
-            if (r == null) { log(T("tv_main.newest_version", "v" to version())); return@job }
-            val a = adb ?: throw java.io.IOException("ADB")
-            if (SetupUpdate.bad(SetupUpdate.state(a), r.version)) {
-                log(T("tv_main.version_bad_back", "v" to r.version))
-                return@job
-            }
-            log(T("tv_main.downloading_version", "v" to r.version))
-            val apk = File(getExternalFilesDir("update"), "tv-setup-" + r.version + ".apk")
-            var last = 0
-            r.download(apk, Release.Progress { pct -> if (pct >= last + 25) { last = pct; log("  $pct%") } })
-            log(T("tv_main.installing_tv_setup_opens"))
-            SetupUpdate.start(a, apk.absolutePath, r.version, true)
-        }
-    }
-
-    private val self by lazy { dev.tvremote.update.SelfUpdate(this, "tv", "tv-setup.apk") }
-
-    /**
-     * No ADB of its own (off, its key refused, a box that blocks it): Android's installer instead, which asks once, as TV Home
-     * updates. Asking for ADB here was a loop for the very TVs whose ADB is the trouble (the user, 2026-10-25).
-     */
-    private fun selfUpdate() {
-        if (busy) return
-        busy = true
-        log(T("tv_main.checking_for_a_new"))
-        Thread {
-            try {
-                val r = Release.newer(version(), "tv", "tv-setup.apk")
-                ui { newer = r?.version ?: ""; showUpdate() }
-                if (r == null) log(T("tv_main.newest_version", "v" to version())) else ui { install(r) }
-            } catch (e: Exception) { log("✗ " + reason(e)) }
-            busy = false
-        }.start()
-    }
-
-    private fun install(r: Release) {
-        var last = -25
-        val going = self.install(r, { pct -> if (pct >= last + 25) { last = pct; log("  $pct%"); if (pct >= 100) log(T("tv_main.installer_asks")) } },
-            { m -> log("✗ " + m.ifEmpty { "Android" }) })
-        log(if (going) T("tv_main.downloading_version", "v" to r.version) else T("tv_main.allow_installs"))   // not going: Android's switch is open, onResume goes on
-    }
+    private val shelbyUpdates by lazy { dev.tvremote.setup.update.ShelbyUpdates(this) }
 
     /** How the last update went, said once on this screen when it is recent: a version that was undone is worth knowing about. */
     private fun lastUpdate(a: Adb) {
@@ -603,7 +549,6 @@ class MainActivity : Activity() {
         kidsOffTile.view.visibility = if (Rules.kidsMode(Rules.load(this))) View.VISIBLE else View.GONE
         voiceWatch()
         if (MicVoice.on(this)) Thread({ micBlockLog() }, "mic-block").apply { isDaemon = true }.start()   // off: nothing is read
-        self.check({ }, { r -> install(r) })                          // back from "install unknown apps" for an update: on with it
         askOnPhone()
         pairLine.removeCallbacks(pairPoll); pairPoll.run()
         showWeb()

@@ -4,6 +4,21 @@ Ba số phiên bản, mỗi số chỉ tăng khi phần của nó đổi: `VERSI
 
 Three version numbers, each bumped only when its own part changes: `VERSION` (the release and the computer app), `app/android/VERSION` (phone app), `app/tv/VERSION` (TV app). Releases with the install files are on the [Releases](https://github.com/HoangTran0410/tv-remote/releases) page; the apps check there for updates.
 
+## Unreleased
+
+- Shelby+ TV: constrain long YouTube/SmartTube metadata and media controls on iPhone Safari; add WebKit overflow regression coverage.
+- Shelby+ TV: require pinned permanent release signing and matching bundled add-on certificates; add a manual, user-confirmed, certificate-verified GitHub update checker. Temporary-key installations need a one-time migration.
+
+- Shelby+ Remote TV 0.53.0: recreate the uploaded Liquid Glass reference with ambient gradients, transparent remote controls, a floating navigation dock and actual installed-app shortcuts; preserve existing actions, scope gates and official icons. Add Chromium/WebKit interaction and layout checks with downloadable screenshots.
+
+- Shelby+ Remote TV 0.52.2: fix iPhone/PWA icons, favicon and metadata using the official artwork; version icon/manifest URLs and test the real TV web server on port 8765 in an Android TV emulator.
+
+- Shelby+ Remote TV 0.52.1: use the uploaded official logo for the launcher icon, proportional TV banner, startup screen and in-app branding. Remote behavior is unchanged.
+
+- Shelby+ Remote: add tag-triggered GitHub Release APK distribution, signing verification, checksums and Downloader installation instructions.
+
+- Shelby+ Remote: rebrand the TV app and TV browser page; add a dark iPhone remote design and an automatic APK artifact workflow.
+
 ## 0.54.0 - 2026-11-14
 
 Web 0.54.0 · Phone app 0.51.0 · TV app 0.52.0 · TV Home 0.34.0 · TV Channels 0.24.0 · TV Games 0.24.0 · TV Apps 0.8.0

@@ -26,6 +26,8 @@ const paintRows = () => document.querySelectorAll('[data-rows] [data-rid]').forE
   b.querySelector('use').setAttribute('href', '#i-' + e.icon); b.querySelector('small').textContent = remoteWords(e.t);
 });
 paintRows(); new MutationObserver(paintRows).observe(document.documentElement, { attributes: true, attributeFilter: ['data-kind'] });
+// Move the same nodes before key listeners bind, preserving hold, cancellation and confirmation.
+if (CORE === 'tv' && !window.ONTV) shelbyLayout(remoteKey);
 // ---------- keys ----------
 // A tap counts when the pointer lifts on the key (slide off it and nothing is sent). Hold (0.4 s) = the TV sees the key held down until you let go: fast scrolling, long-press menus.
 document.querySelectorAll('[data-k]').forEach((b) => {

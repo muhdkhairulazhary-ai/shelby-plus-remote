@@ -1,0 +1,20 @@
+// TV app + bundled keys add-on must use the same explicitly supplied keystore.
+// Credentials are environment variables (Actions secrets), never source defaults.
+def path = System.getenv('SHELBY_KEYSTORE_PATH')
+def store = path ? file(path) : null
+def supplied = ['SHELBY_STORE_PASSWORD', 'SHELBY_KEY_PASSWORD', 'SHELBY_KEY_ALIAS'].every { System.getenv(it) }
+def ready = store != null && store.isFile() && supplied
+if (path && !ready) throw new GradleException('Shelby signing configuration is incomplete; see SIGNING.md')
+if (ready) {
+    android.signingConfigs.create('shelbyRelease') {
+        storeFile = store
+        storePassword = System.getenv('SHELBY_STORE_PASSWORD')
+        keyAlias = System.getenv('SHELBY_KEY_ALIAS')
+        keyPassword = System.getenv('SHELBY_KEY_PASSWORD')
+    }
+    android.buildTypes.release.signingConfig = android.signingConfigs.shelbyRelease
+    android.buildTypes.debug.signingConfig = android.signingConfigs.shelbyRelease
+}
+tasks.matching { it.name == 'packageRelease' }.configureEach {
+    doFirst { if (!ready) throw new GradleException('Unsigned Shelby release packaging is disabled; see SIGNING.md') }
+}

@@ -269,3 +269,19 @@ hue; in `button`, `label.filebtn`, `a.linkbtn`, `#toast` and the state marks (`I
 - `js/ui.js:30` is an orphan doc comment (belongs to `UI.say` on line 37).
 - `js/core.js:3` calls the computer core "mac"; its value is `pc`.
 - Breakpoints: the system is 640/900, plus one-offs at 380, 420, 440, 480 and 899.
+
+## Shelby+ Remote (TV core only)
+
+The TV-served page uses a permanent black and charcoal palette, white text and a restrained red action accent. Existing semantic status colours remain. Controls keep their protocol handlers and capability gates. The D-pad grows to 248px within the viewport; touch controls use at least 44px targets, safe-area padding and 16px text fields for iPhone Safari. Other cores retain their existing theme.
+
+Shelby+ TV PWA metadata uses `manifest-shelby-v1.json` and `icon-shelby*v1` assets generated from the same root upload as the TV icon. The TV server maps legacy icon/manifest paths to these files, versions all metadata links and manifest icon URLs, and serves manifests with no-store. Shared phone/computer branding stays separate. The TV theme-color stays #080808. No service worker is registered by the TV page; the website demo worker is unrelated. Existing iOS home-screen installations may need removal and re-adding because iOS keeps their icon independently.
+
+## Shelby+ Liquid Glass remote
+
+Primary reference: root upload `3093A066-A1DA-4B74-91A4-6B080CA5D0FD.png` (the requested UUID, uploaded as PNG). Recreate its geometry with CSS and real DOM controls; never use the screenshot as a background. TV browser clients only, excluding the on-TV Manage view. The official icon and Apple/PWA assets remain unchanged.
+
+Black/red radial and diagonal gradients sit behind translucent glass, bright thin edges, inset reflections and prefixed/unprefixed backdrop blur. The existing live TV name/status remains authoritative. A circular red OK, glass D-pad, side volume/channel bars and Power/Home/Back/Menu row use the existing key handler. Menu is a `remote.json` entry for the existing MENU key. The existing keyboard moves into the bottom dock; app search filters actual installed shortcuts, and its mic is the existing voice action. No service, pairing, API or scope rules change.
+
+The bottom tab bar shows Remote, Keyboard and Apps first; horizontal scrolling and the existing arrow-key tab navigation retain access to Files, Health, Automation, Setup and Find. Less frequent remote/media controls remain in an expandable group. Touch controls stay at least 44px; safe-area padding, visible focus, reduced-motion and reduced-transparency/blur fallbacks are required. Desktop and other cores retain their existing controls and branding. The phone's native remote is unchanged because this is a TV-served PWA presentation change.
+
+TV media is a bounded, centered 460px card with a shrinking title track, fixed 44px actions and local ellipsis. TV title/app marquees are disabled to avoid max-content Safari expansion. Both the flex container and its actual children (including display:contents descendants) are constrained; no overflow clipping or zoom-disabling viewport rule hides the fault. Pinch zoom remains available. Regression fixtures include active YouTube/SmartTube playback and thousands of title characters at 320/375/390/430px.

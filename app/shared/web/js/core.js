@@ -446,7 +446,7 @@ async function refreshRead() {
   const tvName = s.name || (s.device && s.device.model) || (s.host ? 'TV ' + s.host : '');
   if (CORE === 'pc') setPicking(!s.host || wantPick, tvName);
   if (s.version) put($('#ver'), 'textContent', (s.app_name || 'TV Remote') + ' ' + s.version + (s.released ? ' · ' + s.released : ''));
-  put(document, 'title', tvName && !picking ? tvName + ' · Remote' : 'TV Remote');
+  put(document, 'title', CORE === 'tv' ? 'Shelby+ Remote' + (tvName ? ' · ' + tvName : '') : tvName && !picking ? tvName + ' · Remote' : 'TV Remote');
   put($('#name'), 'textContent', picking ? 'TV Remote' : tvName);
   put($('#info'), 'textContent', picking ? T('core.choose_tv') : [CORE === 'pc' ? s.host : '', s.asking ? T('core.look_choose_allow') : s.paired === false ? T('core.remote_not_paired') : s.error && !adbUp ? T('core.remote_not_connected') : '',
     s.scope === 'view' ? T('core.view_only') : s.scope === 'remote' ? T('core.remote_only') : ''].filter(Boolean).join(' · ') || T('core.connected'));   // a guest knows what it was given

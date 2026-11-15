@@ -18,7 +18,7 @@ setTimeout(() => document.documentElement.classList.add('tabbed'), 3000);
     const t = window.THEME === 'auto' ? (dark.matches ? 'dark' : 'light') : window.THEME;
     document.documentElement.dataset.theme = t;                    // the css reads only this, not the media query
     const m = document.querySelector('meta[name=theme-color]');
-    if (m) m.content = t === 'dark' ? '#111418' : '#f3f4f7';
+    if (m) m.content = document.documentElement.dataset.core === 'tv' ? '#080808' : t === 'dark' ? '#111418' : '#f3f4f7';
   };
   window.setTheme = (v) => {
     window.THEME = pick(v) || 'auto';
