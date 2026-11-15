@@ -59,6 +59,8 @@ jobs:
         run: |
           python3 -m pip install Pillow==12.0.0
           python3 dev/gen/shelby_art.py --check
+      - name: Signing policy checks
+        run: python3 dev/release/test_shelby_signing.py
       - name: Web checks
         run: node --test app/shared/tests/*.test.js
       - name: Require and verify permanent signing configuration

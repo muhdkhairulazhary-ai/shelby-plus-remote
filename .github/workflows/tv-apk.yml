@@ -49,6 +49,26 @@ jobs:
         env:
           SHELBY_TEST_BUILD: '1'
         run: app/tvsetup/build.sh
+      - name: Verify validation APK and bundled add-on signatures
+        run: |
+          mkdir -p validation-evidence
+          unzip -p app/tvsetup/build/tv-setup.apk assets/tvkeys.apk > "$RUNNER_TEMP/validation-addon.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/tvsetup/build/tv-setup.apk > validation-evidence/SIGNING-CERTIFICATE.txt
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/validation-addon.apk" > "$RUNNER_TEMP/validation-addon.txt"
+          python3 - <<'PYCODE'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'dev/release')
+          import shelby_release as release
+          main=Path('validation-evidence/SIGNING-CERTIFICATE.txt').read_text()
+          addon=Path(__import__('os').environ['RUNNER_TEMP'])/'validation-addon.txt'
+          pin=release.certificate(main)
+          assert release.identity(main,addon.read_text(),pin,main,False,False)
+          import zipfile
+          with zipfile.ZipFile('app/tvsetup/build/tv-setup.apk') as apk:
+              assert apk.read('assets/LICENSE') == Path('LICENSE').read_bytes()
+          print('Validation APK v1/v2, matching add-on signer and MIT attribution verified.')
+          PYCODE
       - name: Kotlin tests and API lint
         working-directory: app/gradle
         run: ./gradlew --no-daemon :shared:testDebugUnitTest :tvsetup:testDebugUnitTest :shared:lintDebug :tvsetup:lintDebug
@@ -56,6 +76,7 @@ jobs:
         run: |
           mkdir -p artifact
           cp app/tvsetup/build/tv-setup.apk artifact/shelby-plus-remote-tv.apk
+          cp validation-evidence/SIGNING-CERTIFICATE.txt artifact/
           cp LICENSE artifact/LICENSE
           cp SHELBY.md artifact/INSTALL.md
           cd artifact
