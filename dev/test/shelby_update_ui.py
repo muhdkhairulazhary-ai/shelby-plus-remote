@@ -19,13 +19,31 @@ def tree():
 def main():
     output=Path(sys.argv[1]); output.mkdir(parents=True,exist_ok=True)
     version=Path('app/tvsetup/VERSION').read_text().strip()
-    ui=tree()
-    (output/"initial.xml").write_bytes(ET.tostring(ui))
-    (output/"initial.png").write_bytes(adb("exec-out","screencap","-p"))
-    tile=next(n for n in ui.iter('node') if n.get('content-desc')==f'Shelby+ Remote {version}' and n.get('clickable')=='true')
-    x1,y1,x2,y2=map(int,re.findall(r'\d+',tile.get('bounds')))
-    adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2))
-    ui=tree()
+    # Startup's existing ADB discovery may open Developer options asynchronously.
+    # Return without changing any setting; the updater itself must work without ADB.
+    for attempt in range(24):
+        ui=tree()
+        (output/"initial.xml").write_bytes(ET.tostring(ui))
+        (output/"initial.png").write_bytes(adb("exec-out","screencap","-p"))
+        if any('.settings' in n.get('package','') for n in ui.iter('node')):
+            adb('shell','input','keyevent','4')
+            continue
+        if any(n.get('text')=='Check for updates' for n in ui.iter('node')):
+            break
+        tile=next(n for n in ui.iter('node') if n.get('content-desc')==f'Shelby+ Remote {version}' and n.get('clickable')=='true')
+        if tile.get('focused')=='true':
+            adb('shell','input','keyevent','23')
+            continue
+        focused=next((n for n in ui.iter('node') if n.get('focused')=='true'),None)
+        def center(node):
+            x1,y1,x2,y2=map(int,re.findall(r'\d+',node.get('bounds')))
+            return (x1+x2)/2,(y1+y2)/2
+        x,y=center(tile)
+        fx,fy=center(focused) if focused is not None else (x+200,y)
+        key='20' if y-fy>40 else '19' if fy-y>40 else '22' if x>fx else '21'
+        adb('shell','input','keyevent',key)
+    else:
+        raise AssertionError('Could not reach update menu using D-pad; see UI evidence')
     (output/'menu.xml').write_bytes(ET.tostring(ui))
     (output/'shelby-update-menu.png').write_bytes(adb('exec-out','screencap','-p'))
     check=next(n for n in ui.iter('node') if n.get('text')=='Check for updates')
