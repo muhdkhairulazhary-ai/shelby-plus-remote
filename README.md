@@ -1,3 +1,5 @@
+> **Shelby+ Remote — Your TV. Your Control.** Fork setup, APK artifacts, iPhone installation and validation limits: [SHELBY.md](SHELBY.md).
+
 <p align="center"><img src="docs/img/icon.png" width="88" alt="TV Remote"></p>
 
 <h1 align="center">TV Remote</h1>

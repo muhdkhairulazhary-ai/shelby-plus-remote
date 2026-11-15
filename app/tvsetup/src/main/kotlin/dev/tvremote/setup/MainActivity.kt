@@ -96,8 +96,8 @@ class MainActivity : Activity() {
     private val TILE = Color.rgb(34, 39, 47)
     private val MUTED = Color.rgb(140, 150, 163)
     private val SCRIM = Color.argb(215, 5, 7, 10)                     // behind a popup: the screen dimmed, still there
-    private val ACCENT = Color.rgb(59, 115, 246)
-    private val ACCENT_SOFT = Color.argb(64, 59, 115, 246)              // the person's bubble in Support replies, as on the phone page
+    private val ACCENT = Color.rgb(190, 42, 55)
+    private val ACCENT_SOFT = Color.argb(64, 190, 42, 55)              // the person's bubble in Support replies, as on the phone page
     private val OK = Color.rgb(70, 210, 131)
     private val WARN = Color.rgb(240, 179, 74)
     private val BAD = Color.rgb(255, 112, 112)
@@ -142,7 +142,7 @@ class MainActivity : Activity() {
         }
         /** Beside the banners, not under them (no gap to keep for a name: the log below keeps its lines): what OK does, what it is. */
         fun said(): CharSequence {
-            val act = if (app === SELF) (if (this@MainActivity.newer.isNullOrEmpty()) "TV Setup $version" + (if (this@MainActivity.newer == "") " · " + T("tv_main.up_to_date") else "") else T("tv_main.update_to", "v" to this@MainActivity.newer!!))
+            val act = if (app === SELF) (if (this@MainActivity.newer.isNullOrEmpty()) "Shelby+ Remote $version" + (if (this@MainActivity.newer == "") " · " + T("tv_main.up_to_date") else "") else T("tv_main.update_to", "v" to this@MainActivity.newer!!))
                 else newer?.let { T("eco.update", "name" to app.name, "from" to version, "to" to it) } ?: if (on) T("eco.open", "name" to app.name, "v" to version) else T("eco.get", "name" to app.name)
             return android.text.SpannableString("$act\n$sub").apply { setSpan(android.text.style.ForegroundColorSpan(TvUi.TEXT), 0, act.length, 0) }
         }
@@ -151,7 +151,7 @@ class MainActivity : Activity() {
     /** TV Setup Voice in the row too (the user, 2026-11-03: not seen there), never in [dev.tvremote.core.ontv.Bundle]: that installs by itself, this only when asked. */
     private val VOICE = dev.tvremote.core.ontv.Bundle.App("TV Setup Voice", dev.tvremote.core.ontv.VoiceAddon.PKG, "tv", dev.tvremote.core.ontv.VoiceAddon.APK) { a, d, l, p -> dev.tvremote.core.ontv.VoiceAddon.install(a, d, l, progress = p, voice = MicVoice.lang(this)) }
     /** TV Setup itself, first in the row (the user, 2026-11-03: it is one of the apps too); OK opens its Update menu, as the tile at the top. */
-    private val SELF = dev.tvremote.core.ontv.Bundle.App("TV Setup", "dev.tvremote.setup", "tv", "tv-setup.apk") { _, _, _, _ -> org.json.JSONObject() }
+    private val SELF = dev.tvremote.core.ontv.Bundle.App("Shelby+ Remote", "dev.tvremote.setup", "tv", "tv-setup.apk") { _, _, _, _ -> org.json.JSONObject() }
     private lateinit var kidsOffTile: Tile
     private var ecoNote: TextView? = null
     private var ecoWaiting: Eco? = null                               // Android's "install unknown apps" switch was opened for this one
@@ -262,7 +262,8 @@ class MainActivity : Activity() {
         val names = LinearLayout(this)
         names.orientation = LinearLayout.VERTICAL
         names.setPadding(resources.getDimension(R.dimen.tv_head_gap).toInt(), 0, 0, 0)
-        names.addView(text("TV Setup", if (phone) 20 else 24, TvUi.TEXT, true))
+        names.addView(text("Shelby+ Remote", if (phone) 20 else 24, TvUi.TEXT, true))
+        names.addView(text("Your TV. Your Control.", 14, TvUi.TEXT, false))
         names.addView(text("v" + version() + released().let { if (it.isEmpty()) "" else " · $it" }
             + " · Hoang Tran · tvremote.pages.dev", 12, MUTED, false).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })   // the version in use here; the Update tile says whether a newer one exists
         head.addView(names, LinearLayout.LayoutParams(0, -2, 1f))
@@ -464,7 +465,7 @@ class MainActivity : Activity() {
     /** The Update tile: update now, automatic updates on or off, and removing this app, kept out of the way here. */
     private fun updateMenu() {
         if (busy) return
-        menu("TV Setup " + version(), listOf(
+        menu("Shelby+ Remote " + version(), listOf(
             TvUi.Item(R.drawable.ic_download, T("tv_main.update_now")) { if (adb == null) selfUpdate() else update() },
             TvUi.Item(R.drawable.ic_refresh, T("tv_main.automatic_updates"), on = { AutoUpdate.on(this) }) { AutoUpdate.set(this, !AutoUpdate.on(this)); log(autoText()); showUpdate() },
             TvUi.Item(R.drawable.ic_trash, T("tv_main.remove_tv_setup")) { askRemove() }))

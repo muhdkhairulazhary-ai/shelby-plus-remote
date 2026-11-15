@@ -15,6 +15,8 @@ class WebPage(private val open: (String) -> java.io.InputStream, private val cor
         val bytes = (if (name == VoicePhrases.NAME) VoicePhrases.json() else null) ?: synchronized(cache) {   // the voice phrases: the freshest signed list the app holds, not a copy made once
             cache[name] ?: try {
                 var b = open(name).use { it.readBytes() }
+                if (core == "tv" && name == "manifest.json") b = String(b, Charsets.UTF_8)
+                    .replace("TV Remote", "Shelby+ Remote").replace("Remote cho Android TV / Google TV", "Your TV. Your Control.").toByteArray(Charsets.UTF_8)
                 if (name == "index.html") b = page(String(b, Charsets.UTF_8)).toByteArray(Charsets.UTF_8)
                 b.also { if (room(cache, it.size)) cache[name] = it }
             } catch (e: Exception) { null }
@@ -44,7 +46,7 @@ class WebPage(private val open: (String) -> java.io.InputStream, private val cor
     private fun room(m: Map<String, ByteArray>, add: Int) = m.size < 256 && m.values.sumOf { it.size } + add <= BUDGET
 
     private fun page(html: String): String =
-        LINK.replace(html.replaceFirst("<html ", "<html data-core=\"$core\" ")) { it.groupValues[1] + "?v=" + stamp + "\"" }
+        LINK.replace((if (core == "tv") html.replace("TV Remote", "Shelby+ Remote") else html).replaceFirst("<html ", "<html data-core=\"$core\" ")) { it.groupValues[1] + "?v=" + stamp + "\"" }
 
     private companion object {
         const val BUDGET = 4 shl 20

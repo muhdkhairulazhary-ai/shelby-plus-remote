@@ -1,0 +1,53 @@
+name: Shelby+ Remote TV APK
+on:
+  push:
+    branches: [main, 'feat/shelby-plus-*']
+    paths: ['app/tvsetup/**', 'app/tvkeys/**', 'app/shared/**', 'app/gradle/**', '.github/workflows/tv-apk.yml']
+  pull_request:
+    paths: ['app/tvsetup/**', 'app/tvkeys/**', 'app/shared/**', 'app/gradle/**', '.github/workflows/tv-apk.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tv-apk-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install Android build dependencies
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Web checks
+        run: node --test app/shared/tests/*.test.js
+      - name: Build signed test APK and bundled keys add-on
+        # Both APKs must use the same key for their signature permission.
+        # This ephemeral CI key is for fresh test installations, not release updates.
+        run: app/tvsetup/build.sh
+      - name: Kotlin tests and API lint
+        working-directory: app/gradle
+        run: ./gradlew --no-daemon :shared:testDebugUnitTest :tvsetup:testDebugUnitTest :shared:lintDebug :tvsetup:lintDebug
+      - name: Prepare download
+        run: |
+          mkdir -p artifact
+          cp app/tvsetup/build/tv-setup.apk artifact/shelby-plus-remote-tv.apk
+          cp LICENSE artifact/LICENSE
+          cp SHELBY.md artifact/INSTALL.md
+          cd artifact
+          sha256sum shelby-plus-remote-tv.apk > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shelby-plus-remote-tv-apk
+          path: artifact/
+          if-no-files-found: error
+          retention-days: 30

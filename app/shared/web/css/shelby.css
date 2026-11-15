@@ -1,0 +1,20 @@
+/* Shelby+ presentation belongs only to the TV-served page. */
+:root[data-core=tv] {
+  color-scheme:dark;
+  --bg:#080808; --card:#161616; --ink:#fafafa; --muted:#b2b2b2; --line:#383838;
+  --btn:#262626; --btn-hi:#363636; --accent:#be2a37; --accent-ink:#fff; --accent-text:#ff939b; --sel:#361b20;
+  --ctl:44px; --ctl-sm:44px; --chip:44px;
+}
+.shelby-brand { display:none; }
+html[data-core=tv] .shelby-brand { display:flex; flex-direction:column; gap:4px; padding:12px 2px; }
+html[data-core=tv] .shelby-brand strong { font-size:24px; letter-spacing:-.04em; }
+html[data-core=tv] .shelby-brand span { color:var(--muted); font-size:14px; }
+html[data-core=tv] main { padding-bottom:calc(20px + env(safe-area-inset-bottom)); padding-left:max(16px, env(safe-area-inset-left)); padding-right:max(16px, env(safe-area-inset-right)); }
+html[data-core=tv] .rc { border:1px solid var(--line); border-radius:24px; background:var(--card); }
+html[data-core=tv] .dpad { width:min(248px, 70vw); }
+html[data-core=tv] .dpad button { color:var(--ink); touch-action:manipulation; }
+html[data-core=tv] .dpad .ok { color:var(--accent-ink); }
+html[data-core=tv] .rb { border:1px solid var(--line); touch-action:manipulation; }
+html[data-core=tv] input, html[data-core=tv] textarea { font-size:16px; }
+html[data-core=tv] #textf { flex-wrap:wrap; }
+html[data-core=tv] #text { flex:1 1 140px; min-width:0; }

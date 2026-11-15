@@ -319,3 +319,7 @@ They mirror the web UI (`app/shared/web`, `css/kit.css`), not the TV apps.
 - A change to the remote's keys or menus goes in `app/shared/web/remote.json` (read by `PhoneRemote.kt`), not by hand; any other web
   UI change is mirrored by hand here, or the change says why it can't be (AGENTS.md).
 - Check on the phone emulator `tvremote_test`, both themes and both languages, with screenshots.
+
+## Shelby+ Remote fork
+
+TV Setup is presented as Shelby+ Remote, with the tagline “Your TV. Your Control.” MainActivity uses red action accents over the existing dark TV surfaces. Shared TV components and other apps retain their tokens. Package IDs, permissions and stored names stay compatible.

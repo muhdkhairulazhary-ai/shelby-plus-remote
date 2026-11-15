@@ -269,3 +269,7 @@ hue; in `button`, `label.filebtn`, `a.linkbtn`, `#toast` and the state marks (`I
 - `js/ui.js:30` is an orphan doc comment (belongs to `UI.say` on line 37).
 - `js/core.js:3` calls the computer core "mac"; its value is `pc`.
 - Breakpoints: the system is 640/900, plus one-offs at 380, 420, 440, 480 and 899.
+
+## Shelby+ Remote (TV core only)
+
+The TV-served page uses a permanent black and charcoal palette, white text and a restrained red action accent. Existing semantic status colours remain. Controls keep their protocol handlers and capability gates. The D-pad grows to 248px within the viewport; touch controls use at least 44px targets, safe-area padding and 16px text fields for iPhone Safari. Other cores retain their existing theme.
