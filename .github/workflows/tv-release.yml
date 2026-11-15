@@ -1,0 +1,110 @@
+name: Shelby+ Remote TV Release
+on:
+  push:
+    tags: ['shelby-tv-v*']
+permissions:
+  contents: read
+concurrency:
+  group: tv-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate tag and refuse an existing release
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^shelby-tv-v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$ ]]
+          [[ "$GITHUB_REF_NAME" == "shelby-tv-v$(cat app/tvsetup/VERSION)-"* ]]
+          # Fail closed on API errors; never replace assets of an existing release.
+          gh api "repos/$GH_REPO/releases?per_page=100" > "$RUNNER_TEMP/releases.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          releases = json.loads((Path(os.environ['RUNNER_TEMP']) / 'releases.json').read_text())
+          assert all(r['tag_name'] != os.environ['GITHUB_REF_NAME'] for r in releases), 'Release already exists; use a new distribution tag'
+          PY
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install Android build dependencies
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Web checks
+        run: node --test app/shared/tests/*.test.js
+      - name: Restore private signing key if configured
+        env:
+          SHELBY_KEYSTORE: ${{ secrets.SHELBY_TV_KEYSTORE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          if [[ -n "$SHELBY_KEYSTORE" ]]; then
+            printf '%s' "$SHELBY_KEYSTORE" | base64 --decode > app/tvsetup/signing.jks
+            printf 'SIGNING_MODE=persistent\n' >> "$GITHUB_ENV"
+          else
+            # build.sh creates a private, temporary key shared with the add-on.
+            printf 'SIGNING_MODE=temporary\n' >> "$GITHUB_ENV"
+            echo '::warning::No persistent signing secret: this release requires a fresh installation when changing keys.'
+          fi
+      - name: Build existing signed TV APK
+        run: app/tvsetup/build.sh
+      - name: Kotlin tests and API lint
+        working-directory: app/gradle
+        run: ./gradlew --no-daemon :shared:testDebugUnitTest :tvsetup:testDebugUnitTest :shared:lintDebug :tvsetup:lintDebug
+      - name: Verify APKs and prepare release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p distribution
+          cp app/tvsetup/build/tv-setup.apk distribution/shelby-plus-remote-tv.apk
+          unzip -p distribution/shelby-plus-remote-tv.apk assets/tvkeys.apk > "$RUNNER_TEMP/tvkeys.apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs distribution/shelby-plus-remote-tv.apk > distribution/SIGNING-CERTIFICATE.txt
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/tvkeys.apk" > "$RUNNER_TEMP/addon-certificate.txt"
+          python3 - <<'PY'
+          import os, re, zipfile
+          from pathlib import Path
+          main = Path('distribution/SIGNING-CERTIFICATE.txt').read_text()
+          addon = (Path(os.environ['RUNNER_TEMP']) / 'addon-certificate.txt').read_text()
+          def digest(s):
+              return re.search(r'^Signer #1 certificate SHA-256 digest: (\S+)$', s, re.M).group(1)
+          assert digest(main) == digest(addon), 'TV app and add-on must share a signer'
+          assert 'Verified using v1 scheme (JAR signing): true' in main, 'Android 5 installation needs v1 signing'
+          assert 'Verified using v2 scheme (APK Signature Scheme v2): true' in main, 'APK v2 signature missing'
+          with zipfile.ZipFile('distribution/shelby-plus-remote-tv.apk') as apk:
+              assert apk.read('assets/LICENSE') == Path('LICENSE').read_bytes(), 'Original MIT notice missing'
+          PY
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging distribution/shelby-plus-remote-tv.apk > distribution/APK-INFO.txt
+          grep -q "package: name='dev.tvremote.setup'" distribution/APK-INFO.txt
+          cp LICENSE distribution/LICENSE
+          cp SHELBY.md distribution/INSTALL.md
+          (cd distribution && sha256sum shelby-plus-remote-tv.apk > SHA256SUMS)
+      - name: Publish complete GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .github/release-notes/shelby-tv.md "$RUNNER_TEMP/release-notes.md"
+          printf '\nSigning mode for this release: **%s**.\n' "$SIGNING_MODE" >> "$RUNNER_TEMP/release-notes.md"
+          printf '\nAPK version: %s. Source commit: %s.\n' "$(cat app/tvsetup/VERSION)" "$GITHUB_SHA" >> "$RUNNER_TEMP/release-notes.md"
+          gh release create "$GITHUB_REF_NAME" --verify-tag --draft \
+            --title "Shelby+ Remote $GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/release-notes.md"
+          gh release upload "$GITHUB_REF_NAME" distribution/*
+          gh release edit "$GITHUB_REF_NAME" --draft=false --latest
+      - name: Remove private build keys
+        if: always()
+        run: rm -f app/tvsetup/signing.jks "$RUNNER_TEMP/tvkeys.apk"
