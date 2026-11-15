@@ -6,6 +6,9 @@ Three version numbers, each bumped only when its own part changes: `VERSION` (th
 
 ## Unreleased
 
+- Shelby+ TV: constrain long YouTube/SmartTube metadata and media controls on iPhone Safari; add WebKit overflow regression coverage.
+- Shelby+ TV: require pinned permanent release signing and matching bundled add-on certificates; add a manual, user-confirmed, certificate-verified GitHub update checker. Temporary-key installations need a one-time migration.
+
 - Shelby+ Remote TV 0.53.0: recreate the uploaded Liquid Glass reference with ambient gradients, transparent remote controls, a floating navigation dock and actual installed-app shortcuts; preserve existing actions, scope gates and official icons. Add Chromium/WebKit interaction and layout checks with downloadable screenshots.
 
 - Shelby+ Remote TV 0.52.2: fix iPhone/PWA icons, favicon and metadata using the official artwork; version icon/manifest URLs and test the real TV web server on port 8765 in an Android TV emulator.

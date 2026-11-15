@@ -2355,7 +2355,6 @@
  "tv_main.remove_tv_setup": "احذف TV Setup",
  "tv_main.needs_adb_turn_on": "✗ يحتاج ADB: شغّل Debugging أولًا.",
  "tv_main.checking_for_a_new": "جارٍ البحث عن إصدار جديد...",
- "tv_main.installing_tv_setup_opens": "جارٍ التثبيت. سيُفتح TV Setup مرة أخرى بعد نصف دقيقة تقريبًا.",
  "tv_main.control_from_a_phone": "التحكم من جوال",
  "tv_main.the_tv_has_no": "التلفزيون غير متصل بالشبكة: وصّله بـ Wi-Fi.",
  "tv_main.off": "متوقف.",
@@ -2623,8 +2622,6 @@
  "tv_main.update_to": "حدّث إلى {v}",
  "tv_main.update_from": "النسخة الحالية {v} · اختر للتثبيت",
  "tv_main.update_check": "تحقق من التحديثات",
- "tv_main.version_bad_back": "⚠ النسخة {v} لم تعمل على هذا التلفزيون، فرجع TV Setup إلى هذه النسخة. انتظر النسخة القادمة.",
- "tv_main.downloading_version": "جارٍ تنزيل النسخة {v}...",
  "tv_main.updated_to": "✓ تم التحديث إلى النسخة {v}.",
  "tv_main.rolled_back": "⚠️ النسخة {v} لم تعمل على هذا التلفزيون، فرجع TV Setup إلى النسخة {old}. المؤقتات والأجهزة المرتبطة والإعدادات كلها باقية.",
  "tv_main.version_shaky": "⚠️ النسخة {v} قد لا تعمل جيدًا على هذا التلفزيون. إذا لاحظت مشكلة، أعد تثبيت TV Setup من تطبيق TV Remote.",
@@ -5112,5 +5109,9 @@
  "home.multi_dbl": "ضغط مزدوج",
  "home.multi_hold": "ضغط مطوّل",
  "home.multi_none": "غير محدد",
- "core.need_keymulti": "ضغط مزدوج أو مطوّل على زر في جهاز التحكم"
+ "core.need_keymulti": "ضغط مزدوج أو مطوّل على زر في جهاز التحكم",
+ "shelby_update.not_ready": "التحديثات غير جاهزة لهذا الإصدار. ثبّت إصدارًا موثوقًا أولاً.",
+ "shelby_update.ask": "هل تريد تنزيل تحديث Shelby+ هذا والتحقق منه؟ سيطلب Android التأكيد قبل التثبيت.",
+ "shelby_update.rejected": "لا يوجد تحديث تم التحقق منه أو تعذر التحقق. لم يتم تثبيت أي شيء.",
+ "shelby_update.installer_blocked": "حظر Android هذا المثبّت. استخدم ملف APK الذي تم التحقق منه عبر المثبّت المعتاد."
 }

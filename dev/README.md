@@ -177,3 +177,5 @@ Editing `app/shared/web` needs only a page reload; Kotlin needs a rebuild. Insid
 **Versions:** six numbers, each bumped only when its part changes; `dev/release/release.sh` does it, builds and makes the GitHub release; notes go under `## Unreleased` in `CHANGELOG.md`. **Keep the three places in step:** a change to the controls goes in the Phone app, the TV web page and the Computer app; the remote's keys live once in `app/shared/web/remote.json`.
 
 Credits: [scrcpy](https://github.com/Genymobile/scrcpy) (Apache-2.0), [JMuxer](https://github.com/samirkumardas/jmuxer) (MIT), [webview](https://github.com/webview/webview) (MIT), [JNA](https://github.com/java-native-access/jna) (Apache-2.0); the table games follow [gamehub24](https://gamehub24.pages.dev).
+
+Shelby+ fork builds and protected permanent signing: [SIGNING.md](../SIGNING.md). Validation APKs use explicit disposable keys and are not release updates.

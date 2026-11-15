@@ -77,35 +77,9 @@ internal class AutoUpdate(private val c: Context, private val version: String, p
         if (!on(c) && !apps) return 60 * MIN
         val now = System.currentTimeMillis()
         if (apps && now - appsAt >= UpdatePlan.CHECK) adb()?.let { a -> appsAt = if (ownApps(a)) now else now - UpdatePlan.CHECK + UpdatePlan.RETRY }   // one had to wait: again soon
-        if (!on(c)) return 20 * MIN                                   // TV Setup's own switch off: only the apps whose switch is on
-        if (found == null && now - checkedAt < UpdatePlan.CHECK) return 20 * MIN
-        if (now - checkedAt >= UpdatePlan.CHECK) {
-            checkedAt = now
-            val r = Release.newer(version, "tv", "tv-setup.apk")
-            if (r?.version != found?.version) apk = null
-            found = r
-        }
-        val r = found ?: return 20 * MIN
-        val left = UpdatePlan.soakLeft(r.published, firstSeen(r.version, now), now, installId(), android.os.Build.VERSION.SDK_INT)
-        if (left > 0) return minOf(left, 20 * MIN).coerceAtLeast(MIN)  // its spot in the spread has not come: a release pulled meanwhile never reaches this TV
-        val a = adb() ?: return 10 * MIN
-        val s = SetupUpdate.state(a)
-        if (SetupUpdate.bad(s, r.version)) return 6 * 60 * MIN        // it broke here once: wait for the next version
-        if (SetupUpdate.busy(s)) return 10 * MIN
-        if (SetupUpdate.failedLately(s, r.version, now)) {            // the TV refused it (storage full, a bad file...): not every half hour,
-            apk?.delete(); apk = null                                 // and downloaded again next time
-            return 6 * 60 * MIN                                       // after those 6 hours it tries once more (SetupUpdate.FAILED_WAIT)
-        }
-        val file = apk ?: File(dir ?: return 60 * MIN, "tv-setup-" + r.version + ".apk").also {
-            r.download(it, null)                                      // deletes what does not match its signed checksum
-            apk = it
-        }
-        if (!file.isFile) { apk = null; return 10 * MIN }
-        busy()?.let { return 10 * MIN }
-        // a phone or computer watching or controlling the TV through its own scrcpy session (ours is closed by now: see busy)
-        if (a.shell("ps -A -o ARGS 2>/dev/null | grep -c '[c]om.genymobile.scrcpy.Server'").trim().let { it != "" && it != "0" }) return 10 * MIN
-        SetupUpdate.start(a, file.absolutePath, r.version)
-        return 30 * MIN                                               // the install closes this app; this is for a failed one
+        // Shelby's own APK is updated only by its pinned, user-confirmed fork checker.
+        // Keep the separately opted-in upstream ecosystem updates above unchanged.
+        return 20 * MIN
     }
 
     /** When this TV first saw [version] (kept over restarts): the start of the spread when GitHub's published_at was not read. */

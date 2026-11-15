@@ -182,6 +182,11 @@ const RUN = ['#pltitle', '#plsub', '.nowapp b', '.item .name small.pkg', '.setva
 const runObs = new ResizeObserver((list) => list.forEach((e) => runFit(e.target)));
 function runFit(t) {
   if (t.classList.contains('rin')) return;
+  // A compact TV media card truncates locally; a marquee's max-content span can widen Safari's layout viewport.
+  if (document.documentElement.dataset.core === 'tv' && !window.ONTV && t.matches('#pltitle, #plsub, .nowapp b')) {
+    if (t.firstChild?.run) { t.firstChild.run.cancel(); t.firstChild.run = null; }
+    t.classList.remove('run'); return;
+  }
   if (!runSeen.has(t)) { runSeen.add(t); runObs.observe(t); }
   let s = t.firstChild, fresh = false;
   if (!t.clientWidth) {                                               // its tab hidden: WebKit drops the moving layer and, the same animation

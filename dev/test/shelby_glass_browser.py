@@ -39,7 +39,7 @@ async def run_engine(pw, engine, args):
     await context.add_init_script("localStorage.setItem('lang','en');localStorage.setItem('theme','dark');localStorage.setItem('homehint','1')")
     host = await context.new_page()
     calls, errors = [], []
-    mode = {'scope': 'full', 'paired': True, 'core': 'tv'}
+    mode = {'scope': 'full', 'paired': True, 'core': 'tv', 'media': None}
     mock = (ROOT / 'docs/demo/mock.js').read_text()
     for old, new in [('com.demo.tube', 'com.google.android.youtube.tv'), ('Tube', 'YouTube'),
                      ('com.demo.stream', 'com.netflix.ninja'), ('Streamly', 'Netflix'),
@@ -52,10 +52,21 @@ async def run_engine(pw, engine, args):
             calls.append({'path': path, 'body': json.loads(body or '{}')})
         if path == '/api/state' and not mode['paired']:
             return {'status': 401, 'type': 'application/json', 'body': '{"error":"not paired","name":"PRISM+ Google TV"}'}
+        if path == '/api/playing' and mode['media']:
+            media = mode['media']
+            if method == 'POST':
+                action = json.loads(body or '{}')
+                if action.get('do') in ('play', 'pause'):
+                    media['state'] = 'playing' if action['do'] == 'play' else 'paused'
+                if action.get('do') == 'seek':
+                    media['pos'] = action['ms']
+            return {'status': 200, 'type': 'application/json', 'body': json.dumps(media)}
         result = await host.evaluate('(q)=>demoApi(q)', {'method': method, 'path': path, 'search': '?' + query if query else '', 'body': body})
         if path == '/api/state':
             state = json.loads(result['body'])
-            state.update(name='PRISM+ Google TV', app_name='Shelby+ Remote', version='0.53.0', scope=mode['scope'], is_on=True)
+            state.update(name='PRISM+ Google TV', app_name='Shelby+ Remote', version='0.53.1', scope=mode['scope'], is_on=True)
+            if mode['media']:
+                state.update(app=mode['media']['pkg'], app_label=mode['media']['app'])
             result['body'] = json.dumps(state)
         return result
 
@@ -118,7 +129,7 @@ async def run_engine(pw, engine, args):
         return page
 
     results = []
-    for width in (320, 390, 430, 1100):
+    for width in (320, 375, 390, 430, 1100):
         page = await page_at(width)
         assert not errors, errors
         assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth'), f'{engine}/{width}: horizontal page overflow'
@@ -130,6 +141,38 @@ async def run_engine(pw, engine, args):
             assert box and box['width'] >= 44 and box['height'] >= 44, (engine, width, selector, box)
         assert await page.locator('.shelby-mainkeys button').first.evaluate('(el)=>getComputedStyle(el).transitionDuration') == '0s', 'Reduced motion ignored'
         await page.screenshot(path=args.out / f'shelby-glass-{engine}-{width}.png', full_page=True)
+        baseline = await page.evaluate('document.documentElement.scrollHeight')
+        for pkg, app in [('com.google.android.youtube.tv', 'YouTube'), ('org.smarttube.stable', 'SmartTube')]:
+            mode['media'] = {'state': 'playing', 'title': ('Long video title • 字幕 🎬 ' * 35) + ('UnbrokenVideoTitle' * 70),
+                             'sub': 'Channel name with a very long description ' * 20, 'app': app, 'pkg': pkg,
+                             'pos': 62000, 'dur': 10800000, 'speed': 1, 'seek': True}
+            await page.evaluate('refresh()')
+            await page.evaluate('plPoll()')
+            await page.wait_for_timeout(700)
+            metrics = await page.evaluate('''() => {
+              const r=document.querySelector('.rc .dpad').getBoundingClientRect();
+              const p=document.querySelector('#playing').getBoundingClientRect();
+              const n=document.querySelector('nav.tabs').getBoundingClientRect();
+              return {scroll:document.documentElement.scrollWidth, viewport:innerWidth,
+                scale:visualViewport?.scale || 1, doc:document.documentElement.scrollHeight,
+                padWidth:r.width, padHeight:r.height, center:r.x+r.width/2,
+                playerWidth:p.width, playerHeight:p.height, navLeft:n.left, navRight:n.right, navBottom:n.bottom};
+            }''')
+            assert metrics['scroll'] <= width and metrics['viewport'] == width, (engine, width, app, metrics)
+            assert abs(metrics['scale']-1) < .02, (engine, width, 'unexpected zoom', metrics)
+            assert abs(metrics['padWidth']-metrics['padHeight']) < 1 and abs(metrics['center']-width/2) < 2, metrics
+            assert metrics['playerWidth'] <= width and metrics['playerHeight'] < 160, metrics
+            assert metrics['doc'] <= baseline+200, (engine, width, 'media inflated height', metrics)
+            assert metrics['navLeft'] >= 0 and metrics['navRight'] <= width and metrics['navBottom'] <= 844, metrics
+            if width in (375,390):
+                await page.screenshot(path=args.out / f'shelby-media-{engine}-{width}-{app.lower()}.png', full_page=True)
+            if width == 390:
+                before=len(calls)
+                await page.locator('#plplay').click()
+                await page.wait_for_timeout(600)
+                assert any(c['path']=='/api/playing' and c['body'].get('do')=='pause' for c in calls[before:])
+        mode['media'] = None
+        await page.evaluate('plPoll()')
         if width == 390:
             if engine == 'chromium':
                 media = await context.new_cdp_session(page)
@@ -237,6 +280,7 @@ async def main():
         for engine in (['chromium', 'webkit'] if args.engine == 'all' else [args.engine]):
             results += await run_engine(pw, engine, args)
     report = {'fixture': 'Simulated PRISM+ and installed apps; no real TV or iPhone', 'results': results,
+              'media': 'YouTube/SmartTube playback with long unbroken and multilingual titles: viewport, D-pad, compact player and safe dock PASS',
               'actions': 'OK/Home/Back/Menu/volume/channel, long press, cancellation, keyboard, app search/launch, tabs/settings and Power confirmation PASS',
               'security_ui': 'Pairing and view-only controls remain gated; PC layout unchanged', 'accessibility': '44px controls, circular D-pad, reduced motion and Chromium reduced-transparency fallback PASS'}
     (args.out / 'report.json').write_text(json.dumps(report, indent=2))

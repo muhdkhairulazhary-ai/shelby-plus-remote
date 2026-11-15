@@ -15,7 +15,7 @@ The TV app and the page it serves are branded Shelby+ Remote. The shared browser
 5. Put iPhone and TV on the same trusted Wi-Fi. In Safari enter the address shown on the TV, for example `http://192.168.1.50:8765`. Request the code on the TV and enter its six digits. Keep port 8765 on your local network.
 6. Use the D-pad/OK, Home, Back and volume controls. Tap Keyboard to open the existing text interface; typing requires the existing ADB connection and remains dependent on the focused TV app. Safari → Share → Add to Home Screen can save the remote.
 
-Actions test APKs use a new temporary signing key per run, shared with the bundled keys add-on. They cannot update an upstream installation or a previous CI build with a different signing key. Removing an earlier installation loses its local settings/pairings; retain it if that is undesirable. Production updates require a private, persistent signing key, outside git. This workflow creates downloadable test artifacts, not signed upstream releases, and does not change existing automatic update or signature-verification behavior.
+Actions test APKs use a new temporary signing key per run, shared with the bundled keys add-on. They cannot update an upstream installation or a previous CI build with a different signing key. Removing an earlier installation loses its local settings/pairings; retain it if that is undesirable. Production updates require a private, persistent signing key, outside git. This workflow creates downloadable test artifacts, not signed upstream releases, and cannot use the permanent-key update checker.
 
 ## GitHub Release distribution
 
@@ -23,7 +23,7 @@ Push a tag `shelby-tv-v<APK version>-<distribution number>` from this branch, fo
 
 The tag-specific URL is `https://github.com/muhdkhairulazhary-ai/shelby-plus-remote/releases/download/<tag>/shelby-plus-remote-tv.apk`. The `releases/latest/download/shelby-plus-remote-tv.apk` URL follows the latest release, so future latest releases must retain this filename. These URLs work only after their assets have been published.
 
-For consistent release signatures, a repository administrator can configure the private Actions secret `SHELBY_TV_KEYSTORE_BASE64`: base64 of a securely backed-up keystore compatible with the existing build (alias `tvsetup`, store and key passwords `tvsetup`). Without that secret the workflow explicitly labels the release **temporary** and generates a new key. Never put a keystore in git or in release assets. The current GitHub connection cannot manage Actions secrets (HTTP 403).
+Permanent release signing is required; temporary keys are allowed only for explicitly labelled validation builds. See [SIGNING.md](SIGNING.md) for protected environment secrets, certificate verification, migration and manual updates.
 
 Release APKs are checked with Android `apksigner` for v1/v2 signatures, and the bundled add-on must have the same signer. `SIGNING-CERTIFICATE.txt` contains only public certificate information. Update compatibility requires the same signer and an equal or higher versionCode; a different signer requires a fresh installation and may require removing the old keys add-on too. Temporary-key releases do not support reproducible update signatures across builds. Existing upstream automatic-update signature checks and sources are unchanged; these releases do not supply upstream Ed25519 update signatures.
 
@@ -31,7 +31,7 @@ Release APKs are checked with Android `apksigner` for v1/v2 signatures, and the 
 
 Target: PRISM+ Android 11 Google TV and iPhone Safari. These are targets, **not verified device compatibility**. No real TV or physical iPhone was available during implementation; keyboard input has not been tested on a real TV. CI tests and an APK build do not establish device compatibility.
 
-Build locally with JDK 17 and Android SDK 35: `app/tvsetup/build.sh`. Existing output remains `app/tvsetup/build/tv-setup.apk`; Actions packages it as `shelby-plus-remote-tv.apk`.
+Build locally with JDK 17 and Android SDK 35 and the signing environment in SIGNING.md: `app/tvsetup/build.sh`. For validation only, use `SHELBY_TEST_BUILD=1 app/tvsetup/build.sh`. Existing output remains `app/tvsetup/build/tv-setup.apk`; Actions packages it as `shelby-plus-remote-tv.apk`.
 
 ## Official TV artwork (0.52.1)
 

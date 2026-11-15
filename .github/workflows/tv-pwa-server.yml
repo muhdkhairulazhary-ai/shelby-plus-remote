@@ -1,6 +1,9 @@
 name: TV PWA server checks
 on:
   workflow_call:
+  push:
+    branches: ['feat/shelby-plus-*']
+    paths: ['app/shared/**', 'app/tvsetup/**', 'app/tvkeys/**', 'app/gradle/**', 'dev/test/shelby*', '.github/workflows/tv-pwa-server.yml']
 permissions:
   contents: read
 jobs:

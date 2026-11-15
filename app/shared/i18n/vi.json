@@ -2154,7 +2154,6 @@
  "tv_main.remove_tv_setup": "Gỡ TV Setup",
  "tv_main.needs_adb_turn_on": "✗ Cần ADB: bật Gỡ lỗi ADB trước.",
  "tv_main.checking_for_a_new": "Đang kiểm tra bản mới...",
- "tv_main.installing_tv_setup_opens": "Đang cài. TV Setup tự mở lại sau khoảng nửa phút.",
  "tv_main.control_from_a_phone": "Điều khiển từ điện thoại",
  "tv_main.the_tv_has_no": "TV chưa có mạng: nối TV vào Wi-Fi.",
  "tv_main.off": "Đang tắt.",
@@ -2422,8 +2421,6 @@
  "tv_main.update_to": "Cập nhật lên {v}",
  "tv_main.update_from": "Đang dùng {v} · chọn để cài",
  "tv_main.update_check": "Kiểm tra bản mới",
- "tv_main.version_bad_back": "⚠ Bản {v} đã chạy lỗi trên TV này nên TV Setup đã quay về bản đang dùng. Chờ bản sau nhé.",
- "tv_main.downloading_version": "Đang tải bản {v}...",
  "tv_main.updated_to": "✓ Đã cập nhật lên bản {v}.",
  "tv_main.rolled_back": "⚠️ Bản {v} chạy lỗi trên TV này nên TV Setup đã tự quay về bản {old}. Hẹn giờ, ghép nối và cài đặt vẫn còn nguyên.",
  "tv_main.version_shaky": "⚠️ Bản {v} chạy chưa ổn trên TV này. Nếu có lỗi, cài lại TV Setup từ app TV Remote.",
@@ -4715,5 +4712,9 @@
  "home.multi_dbl": "Bấm đúp",
  "home.multi_hold": "Giữ",
  "home.multi_none": "Chưa đặt",
- "core.need_keymulti": "bấm đúp hoặc giữ một phím remote"
+ "core.need_keymulti": "bấm đúp hoặc giữ một phím remote",
+ "shelby_update.not_ready": "Bản này chưa thể cập nhật. Hãy cài bản phát hành đáng tin cậy trước.",
+ "shelby_update.ask": "Tải và kiểm tra bản cập nhật Shelby+ này? Android sẽ hỏi trước khi cài.",
+ "shelby_update.rejected": "Chưa có bản cập nhật đã xác minh hoặc kiểm tra thất bại. Chưa cài gì.",
+ "shelby_update.installer_blocked": "Android đã chặn trình cài này. Hãy cài APK đã xác minh bằng trình cài bạn thường dùng."
 }

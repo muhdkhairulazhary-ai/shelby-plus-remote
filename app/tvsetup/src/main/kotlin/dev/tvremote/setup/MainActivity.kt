@@ -415,12 +415,6 @@ class MainActivity : Activity() {
         if (RemoteService.enabled(this)) RemoteService.start(this)
         showWeb()
         connect()
-        Thread {                                                      // asks GitHub for the latest release, nothing else is sent
-            try {
-                val r = Release.newer(version(), "tv", "tv-setup.apk")
-                ui { newer = r?.version ?: ""; showUpdate() }
-            } catch (ignored: Exception) { ui { showUpdate() } }      // offline: the tile still checks on demand
-        }.start()
     }
 
     /** Opened by touch or by another app, nothing has the focus yet: the first arrow key lands on the first tile that works. */
@@ -467,57 +461,11 @@ class MainActivity : Activity() {
     private fun updateMenu() {
         if (busy) return
         menu("Shelby+ Remote " + version(), listOf(
-            TvUi.Item(R.drawable.ic_download, T("tv_main.update_now")) { if (adb == null) selfUpdate() else update() },
-            TvUi.Item(R.drawable.ic_refresh, T("tv_main.automatic_updates"), on = { AutoUpdate.on(this) }) { AutoUpdate.set(this, !AutoUpdate.on(this)); log(autoText()); showUpdate() },
+            TvUi.Item(R.drawable.ic_download, T("tv_main.update_now")) { shelbyUpdates.check { log(it) } },
             TvUi.Item(R.drawable.ic_trash, T("tv_main.remove_tv_setup")) { askRemove() }))
     }
 
-    private fun update() {
-        job { _ ->
-            log(T("tv_main.checking_for_a_new"))
-            val r = Release.newer(version(), "tv", "tv-setup.apk")
-            ui { newer = r?.version ?: ""; showUpdate() }
-            if (r == null) { log(T("tv_main.newest_version", "v" to version())); return@job }
-            val a = adb ?: throw java.io.IOException("ADB")
-            if (SetupUpdate.bad(SetupUpdate.state(a), r.version)) {
-                log(T("tv_main.version_bad_back", "v" to r.version))
-                return@job
-            }
-            log(T("tv_main.downloading_version", "v" to r.version))
-            val apk = File(getExternalFilesDir("update"), "tv-setup-" + r.version + ".apk")
-            var last = 0
-            r.download(apk, Release.Progress { pct -> if (pct >= last + 25) { last = pct; log("  $pct%") } })
-            log(T("tv_main.installing_tv_setup_opens"))
-            SetupUpdate.start(a, apk.absolutePath, r.version, true)
-        }
-    }
-
-    private val self by lazy { dev.tvremote.update.SelfUpdate(this, "tv", "tv-setup.apk") }
-
-    /**
-     * No ADB of its own (off, its key refused, a box that blocks it): Android's installer instead, which asks once, as TV Home
-     * updates. Asking for ADB here was a loop for the very TVs whose ADB is the trouble (the user, 2026-10-25).
-     */
-    private fun selfUpdate() {
-        if (busy) return
-        busy = true
-        log(T("tv_main.checking_for_a_new"))
-        Thread {
-            try {
-                val r = Release.newer(version(), "tv", "tv-setup.apk")
-                ui { newer = r?.version ?: ""; showUpdate() }
-                if (r == null) log(T("tv_main.newest_version", "v" to version())) else ui { install(r) }
-            } catch (e: Exception) { log("✗ " + reason(e)) }
-            busy = false
-        }.start()
-    }
-
-    private fun install(r: Release) {
-        var last = -25
-        val going = self.install(r, { pct -> if (pct >= last + 25) { last = pct; log("  $pct%"); if (pct >= 100) log(T("tv_main.installer_asks")) } },
-            { m -> log("✗ " + m.ifEmpty { "Android" }) })
-        log(if (going) T("tv_main.downloading_version", "v" to r.version) else T("tv_main.allow_installs"))   // not going: Android's switch is open, onResume goes on
-    }
+    private val shelbyUpdates by lazy { dev.tvremote.setup.update.ShelbyUpdates(this) }
 
     /** How the last update went, said once on this screen when it is recent: a version that was undone is worth knowing about. */
     private fun lastUpdate(a: Adb) {
@@ -605,7 +553,6 @@ class MainActivity : Activity() {
         kidsOffTile.view.visibility = if (Rules.kidsMode(Rules.load(this))) View.VISIBLE else View.GONE
         voiceWatch()
         if (MicVoice.on(this)) Thread({ micBlockLog() }, "mic-block").apply { isDaemon = true }.start()   // off: nothing is read
-        self.check({ }, { r -> install(r) })                          // back from "install unknown apps" for an update: on with it
         askOnPhone()
         pairLine.removeCallbacks(pairPoll); pairPoll.run()
         showWeb()
