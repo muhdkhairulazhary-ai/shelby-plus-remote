@@ -4887,5 +4887,13 @@
  "shelby_update.not_ready": "Les mises à jour ne sont pas disponibles pour cette version. Installez une version fiable.",
  "shelby_update.ask": "Télécharger et vérifier cette mise à jour Shelby+ ? Android demandera confirmation avant l’installation.",
  "shelby_update.rejected": "Aucune mise à jour vérifiée disponible, ou vérification échouée. Rien n’a été installé.",
- "shelby_update.installer_blocked": "Android a bloqué cette installation. Utilisez l’APK vérifié avec votre installateur habituel."
+ "shelby_update.installer_blocked": "Android a bloqué cette installation. Utilisez l’APK vérifié avec votre installateur habituel.",
+ "shelby_update.versions": "Version actuelle : {current} · Disponible : {available}",
+ "shelby_update.network": "GitHub est inaccessible. Vérifiez le Wi-Fi et réessayez.",
+ "shelby_update.missing": "Aucune mise à jour officielle disponible pour le moment. Rien n’a été installé.",
+ "shelby_update.tampered": "Le téléchargement est incomplet ou ne correspond pas au fichier attendu. Réessayez ; rien n’a été installé.",
+ "shelby_update.no_space": "Espace insuffisant. Libérez de la place sur la TV et réessayez.",
+ "shelby_update.cancelled": "Mise à jour annulée. L’app installée reste inchangée.",
+ "shelby_update.install_failed": "Android n’a pas pu installer la mise à jour. Gardez l’app actuelle et réessayez avec une version vérifiée.",
+ "shelby_update.permission": "Autorisez Shelby+ Remote à demander une installation dans Android, puis revenez confirmer la mise à jour."
 }

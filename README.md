@@ -1,5 +1,29 @@
 > **Shelby+ Remote — Your TV. Your Control.** Fork setup, APK artifacts, iPhone installation and validation limits: [SHELBY.md](SHELBY.md).
 
+
+## Shelby+ production releases and updates
+
+Production releases are manual and use the existing protected `shelby-release` environment and permanent signing key. **Do not change or regenerate that key.** Read [SIGNING.md](SIGNING.md) for signing, migration and recovery details. Permanent readiness passed in [run #13](https://github.com/muhdkhairulazhary-ai/shelby-plus-remote/actions/runs/43745151825); this PR does not publish an APK.
+
+1. Review and merge the release changes to `main`. Set `app/tvsetup/VERSION` and `.github/release-notes/shelby-tv.md` in a reviewed PR. Versions use `major.minor.patch` (each 0–99); Android versionCode is `100000 + major*10000 + minor*100 + patch`. Every production release must increase it. The app and add-on package IDs stay unchanged.
+2. On GitHub, open **Actions → Shelby+ Remote TV Release → Run workflow**, select **main** and enter the exact committed version (this change prepares **0.53.2**, code **105302**). Approve the protected environment when requested. The workflow checks public release history/tags, web/Kotlin/lint/browser/TV-server tests, permanent certificate, both APK signatures, add-on signer and MIT notice. It creates `shelby-tv-v<VERSION>-1`; existing tags/releases are never overwritten. Ordinary pushes and PRs only validate.
+3. For the first permanent release, review the one-time temporary-key migration and set the existing environment variable `SHELBY_INITIAL_MIGRATION_APPROVED=true` only if accepting that migration. Remove it afterward. A changed signer after a production release is always rejected. Keep all existing signing secrets and `SHELBY_RELEASE_CERT_SHA256` unchanged.
+4. Download **shelby-plus-remote-tv.apk** from the completed Release, with public certificate, checksum, installation/migration notes and `shelby-update.json`. Validation Actions ZIPs are for fresh test installs and cannot provide production updates.
+
+On Android TV, open Downloader with the physical remote and enter:
+`https://github.com/muhdkhairulazhary-ai/shelby-plus-remote/releases/latest/download/shelby-plus-remote-tv.apk`
+
+That address currently follows the previous published release; it will serve the production APK only after a production release is published. No Downloader numeric code is assigned. Install the APK, open Shelby+ Remote, then open the TV-displayed address (port 8765) in iPhone Safari on the same trusted Wi-Fi and pair.
+
+For later updates, open the Shelby+ Remote banner on the TV, choose **Check for updates**, read current/available versions and notes, then choose Update. If required, Android opens this app's installation permission screen; after returning, confirm again. The verified APK goes to Android's installer, which asks before installation. Same-package, same-key updates keep pairing/settings; **do not uninstall or clear data**. Safari retains authentication when its TV address/origin and browser storage remain the same.
+
+If Wi-Fi, storage, verification or installation fails, the existing app stays installed. Free space/check Wi-Fi and retry, or download the verified tagged APK through Downloader. A faulty installed release needs a corrected, higher-version APK signed with the same key; a lower-version APK is not an in-place rollback. Installer failures are shown on return or the next app opening. Old temporary-key builds need a one-time fresh installation and re-pairing; uninstalling loses their private state.
+
+**iPhone-only workflow:** in Safari sign into GitHub, use the repository Actions tab (Request Desktop Website if controls are hidden), run the reviewed main workflow with its version, approve `shelby-release`, and wait for a successful run. Open Releases to read compatibility notes and copy the stable or tagged APK URL. Enter that URL in Downloader using the TV remote. No computer or iPhone APK installation is required. Approving a signing environment can require a separate permitted reviewer.
+
+Keep encrypted offline backups of the permanent keystore and recovery passwords in separate secure locations; GitHub secrets are not a recoverable backup. Never upload a keystore/password/Base64 secret to a release, issue or git. If the key is lost, future same-key updates cannot be signed. If compromised, stop releases and plan a deliberate migration; this updater rejects certificate rotation. See [SIGNING.md](SIGNING.md).
+
+
 <p align="center"><img src="docs/img/icon.png" width="88" alt="TV Remote"></p>
 
 <h1 align="center">TV Remote</h1>

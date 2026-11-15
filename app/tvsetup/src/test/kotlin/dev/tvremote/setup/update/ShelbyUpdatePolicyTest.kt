@@ -8,6 +8,7 @@ class ShelbyUpdatePolicyTest {
     private val pin = "a".repeat(64)
     private val tag = "shelby-tv-v0.53.2-1"
     private fun json() = JSONObject().put("schema", 1).put("packageName", "dev.tvremote.setup")
+        .put("channel", "production").put("releaseNotes", "Test release").put("releaseDate", "2026-11-15T00:00:00Z")
         .put("version", "0.53.2").put("versionCode", 105302).put("apkUrl", "https://github.com/${ShelbyUpdatePolicy.REPO}/releases/download/$tag/${ShelbyUpdatePolicy.ASSET}")
         .put("sha256", "b".repeat(64)).put("bytes", 1234).put("certificateSha256", pin)
     private fun parse(o: JSONObject = json(), current: Long = 105301) = ShelbyUpdatePolicy.parse(o.toString(), tag, current, pin)
@@ -36,6 +37,12 @@ class ShelbyUpdatePolicyTest {
         rejected { ShelbyUpdatePolicy.archive(candidate, "dev.tvremote.setup", 105301, "0.53.2", listOf(pin)) }
         rejected { ShelbyUpdatePolicy.archive(candidate, "dev.tvremote.setup", 105302, "0.53.2", listOf("c".repeat(64))) }
         rejected { ShelbyUpdatePolicy.archive(candidate, "dev.tvremote.setup", 105302, "0.53.2", listOf(pin, pin)) }
+    }
+    @Test fun productionMetadataAndNotesAreRequired() {
+        rejected { parse(json().put("channel", "validation")) }
+        rejected { parse(json().apply { remove("releaseNotes") }) }
+        rejected { parse(json().put("releaseNotes", "x".repeat(6001))) }
+        rejected { parse(json().put("releaseDate", "invalid")) }
     }
     @Test fun oversizedAndInvalidMetadataAreRejected() {
         rejected { parse(json().put("bytes", ShelbyUpdatePolicy.MAX_APK+1)) }

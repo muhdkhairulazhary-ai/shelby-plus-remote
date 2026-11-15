@@ -55,12 +55,15 @@ jobs:
           target: android-tv
           arch: x86
           disable-animations: true
-          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -skin 1280x720
           script: |
+            adb shell wm size 1280x720
+            adb shell wm density 160
             adb install app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk
             adb shell am start -n dev.tvremote.setup/.MainActivity
             adb forward tcp:8765 tcp:8765
             python3 dev/test/shelby_pwa_server.py > /tmp/shelby-pwa-server.txt 2>&1
+            python3 dev/test/shelby_update_ui.py /tmp/shelby-update-ui > /tmp/shelby-update-ui.txt 2>&1
             timeout 10s adb logcat -d > /tmp/shelby-pwa-logcat.txt 2>/dev/null || true
       - name: Collect emulator evidence
         if: always()
@@ -68,6 +71,10 @@ jobs:
           mkdir -p evidence
           cp /tmp/shelby-pwa-server.txt evidence/ 2>/dev/null || true
           cp /tmp/shelby-pwa-logcat.txt evidence/logcat.txt 2>/dev/null || true
+          cp /tmp/shelby-update-ui.txt evidence/ 2>/dev/null || true
+          cp /tmp/shelby-update-ui/*.png evidence/ 2>/dev/null || true
+          cp /tmp/shelby-update-ui/*.xml evidence/ 2>/dev/null || true
+          cat evidence/shelby-update-ui.txt 2>/dev/null || true
           cat evidence/shelby-pwa-server.txt 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()

@@ -1,26 +1,24 @@
-**Shelby+ Remote — Your TV. Your Control.**
+Shelby+ Remote — Your TV. Your Control.
 
-Download `shelby-plus-remote-tv.apk` directly below. On Android TV, open Downloader and enter:
+This production APK uses the permanent Shelby signing key. The TV app and its bundled keys add-on share the same certificate. Read SIGNING-CERTIFICATE.txt and UPDATE-COMPATIBILITY.txt before installation.
 
+Changes in 0.53.2:
+- Manual Check for updates with current/available versions, release date and release notes.
+- Bounded HTTPS downloads, SHA-256, APK signature/certificate, package and increasing-version checks before Android installation.
+- Download progress and clear offline, storage, verification, cancellation and installer errors.
+- Android installer permission is requested only after choosing Update. Android still asks before installing; no silent installation.
+- Production releases require an explicit manual workflow run and reviewed version. Validation artifacts are excluded from update metadata.
+
+Install the attached shelby-plus-remote-tv.apk using Android TV Downloader. The stable URL follows the latest published release:
 https://github.com/muhdkhairulazhary-ai/shelby-plus-remote/releases/latest/download/shelby-plus-remote-tv.apk
 
-This URL follows the latest published release. Each release also has a permanent tagged download URL. No Downloader numeric code is assigned.
+Use the TV's physical remote for installation, then open the TV-displayed address on port 8765 in iPhone Safari on the same trusted Wi-Fi. Existing pairing, keyboard, remote actions and Safari layout remain intact.
 
-Install on the TV, then open Shelby+ Remote. From iPhone Safari on the same trusted Wi-Fi, open the address shown on the TV (port 8765) and enter the six-digit pairing code. See INSTALL.md for first-time debugging and transfer requirements.
+Same package and permanent certificate with a higher versionCode supports an in-place update that keeps local pairing/settings. Do not uninstall or clear data for a compatible update. Builds signed with a discarded temporary key require a one-time fresh installation of the app and matching add-on, losing local pairing/settings. Keep your current installation until ready to accept that loss.
 
-TV app 0.53.1 recreates the uploaded Shelby+ Liquid Glass reference as a functional PWA: CSS-built black/red ambience, translucent glass surfaces, illuminated OK/D-pad, real Power/Home/Back/Menu and volume/channel keys, installed-app shortcuts, app search, keyboard and a floating scrolling dock. More keys/media controls stay available in an expandable group. Live state supplies the TV name/status; shortcuts reflect installed apps. The official icon, pairing, API endpoints, authentication, security and MIT attribution are preserved.
+If download or installation fails, keep the current app, check Wi-Fi/storage and retry Check for updates or use the verified tagged release APK through Downloader. Android cannot install a lower versionCode as a recovery update; publish a corrected higher version using the same permanent key. See INSTALL.md and SIGNING.md.
 
-Screenshot assets and GLASS-VALIDATION.json show Chromium/WebKit browser checks with **simulated PRISM+ and installed-app data**. They do not show a real TV or iPhone. Browser validation covers 320/375/390/430/1100 CSS-pixel layouts, minimum 44px controls, actual action payloads, hold/release/cancel, keyboard typing, app filtering/launching, all tabs, Power confirmation, pairing and view-only gates. Reduced-motion and reduced-transparency/blur fallback styles are included. The Android 11 TV emulator separately tests the actual RemoteService on port 8765.
+Automated browser/emulator/build checks do not verify a real iPhone, PRISM+ hardware, physical-TV keyboard input or the complete production self-update flow. No such hardware verification is claimed.
 
-Install the APK on the TV using its physical remote, then open its displayed address in iPhone Safari and pair. Remote, Keyboard and Apps appear first in the floating dock; swipe horizontally for Files, Health, Automation, Setup and Find. Existing Safari shortcuts can be removed and re-added if they retain old metadata. The 0.52.2-2 release used a discarded temporary signing key; consult the attached certificate comparison before attempting an update. Different keys require a fresh install and removing old apps loses local settings/pairings. No real-iPhone or PRISM+ hardware verification is claimed.
-
-The workflow checks web/Kotlin tests, Android API lint, APK signatures (v1 and v2), the bundled add-on's matching signer, package metadata, and the packaged MIT notice. Build checks do not establish PRISM+ compatibility or keyboard operation on a real TV; these remain unverified.
-
-Signing:
-
-- Releases require the protected permanent signing key and pinned certificate; there is no temporary-key release fallback. See SIGNING.md.
-- Read UPDATE-COMPATIBILITY.txt and SIGNING-CERTIFICATE.txt before installing. Compatible updates require the same certificate, stable package ID and a strictly higher versionCode; they preserve local data.
-- Earlier temporary-key builds cannot be updated by a different permanent key. A one-time fresh install loses local settings and pairings. Keep the existing installation until ready to accept that migration.
-- The native Shelby update checker is manual and user-confirmed. It verifies HTTPS origin, package, increasing version, size, SHA-256 and the embedded signing certificate before invoking Android's installer. Private keys and passwords are never published.
-
-Based on [Hoang Tran's TV Remote](https://github.com/HoangTran0410/tv-remote). Copyright © 2026 Hoang Tran. Original MIT license preserved in LICENSE and inside the APK.
+Based on Hoang Tran's TV Remote: https://github.com/HoangTran0410/tv-remote
+Copyright © 2026 Hoang Tran. Original MIT license preserved in LICENSE and inside the APK.

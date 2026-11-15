@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+from datetime import datetime, timezone
 
 
 def certificate(text):
@@ -20,9 +21,10 @@ def identity(main, addon, pin, previous, previous_permanent, migration_approved)
         raise ValueError('Expected public signing fingerprint is required')
     if certificate(main) != pin or certificate(addon) != pin:
         raise ValueError('APK and bundled add-on must match the configured permanent signing certificate')
-    for scheme in ('v1 scheme (JAR signing)', 'v2 scheme (APK Signature Scheme v2)'):
-        if f'Verified using {scheme}: true' not in main:
-            raise ValueError('Required APK signature scheme missing')
+    for evidence in (main, addon):
+        for scheme in ('v1 scheme (JAR signing)', 'v2 scheme (APK Signature Scheme v2)'):
+            if f'Verified using {scheme}: true' not in evidence:
+                raise ValueError('Required APK signature scheme missing')
     same = certificate(previous) == pin
     if not same and (previous_permanent or not migration_approved):
         raise ValueError('Signing continuity failed; only an explicitly approved first migration from a temporary release is allowed')
@@ -36,7 +38,7 @@ def badging(text):
     return found[1], int(found[2]), found[3]
 
 
-def metadata(apk, info, previous_info, version, tag, repo, pin):
+def metadata(apk, info, previous_info, version, tag, repo, pin, notes="Shelby+ Remote update", date=None):
     package, code, actual_version = badging(info)
     _, old_code, _ = badging(previous_info)
     if package != 'dev.tvremote.setup' or version != actual_version or code <= old_code:
@@ -51,7 +53,9 @@ def metadata(apk, info, previous_info, version, tag, repo, pin):
     data = Path(apk).read_bytes()
     if not 1 <= len(data) <= 64*1024*1024:
         raise ValueError('APK size is invalid')
-    return dict(schema=1, packageName=package, version=version, versionCode=code,
+    if not notes.strip() or len(notes) > 6000:
+        raise ValueError("Release notes must contain 1..6000 characters")
+    return dict(schema=1, channel="production", releaseNotes=notes, releaseDate=date or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), packageName=package, version=version, versionCode=code,
                 apkUrl=f'https://github.com/{repo}/releases/download/{tag}/shelby-plus-remote-tv.apk',
                 sha256=hashlib.sha256(data).hexdigest(), bytes=len(data), certificateSha256=pin.replace(':','').lower())
 
@@ -69,7 +73,8 @@ def main():
         ('Same signer; compatible package and higher versionCode verified. Existing app data is retained by Android updates.\n' if same else
          'Approved one-time migration from a temporary signer: in-place update is impossible. A fresh install loses local settings and pairings. Future releases must retain this permanent key.\n'))
     output = metadata(root/'shelby-plus-remote-tv.apk', (root/'APK-INFO.txt').read_text(), (temp/'previous-apk-info.txt').read_text(),
-                      Path('app/tvsetup/VERSION').read_text().strip(), os.environ['GITHUB_REF_NAME'], os.environ['GH_REPO'], pin)
+                      Path('app/tvsetup/VERSION').read_text().strip(), os.environ['RELEASE_TAG'], os.environ['GH_REPO'], pin,
+                      Path('.github/release-notes/shelby-tv.md').read_text())
     (root/'shelby-update.json').write_text(json.dumps(output, indent=2)+'\n')
     print('Permanent APK/add-on signer, versionCode, migration policy and update metadata: verified')
 

@@ -2,9 +2,9 @@ name: Shelby+ Remote TV APK
 on:
   push:
     branches: [main, 'feat/shelby-plus-*']
-    paths: ['app/tvsetup/**', 'app/tvkeys/**', 'app/shared/**', 'app/gradle/**', '.github/workflows/tv-apk.yml']
+    paths: ['app/tvsetup/**', 'app/tvkeys/**', 'app/shared/**', 'app/gradle/**', 'dev/release/shelby*', 'dev/release/test_shelby*', '.github/workflows/tv-release.yml', '.github/workflows/tv-apk.yml']
   pull_request:
-    paths: ['app/tvsetup/**', 'app/tvkeys/**', 'app/shared/**', 'app/gradle/**', '.github/workflows/tv-apk.yml']
+    paths: ['app/tvsetup/**', 'app/tvkeys/**', 'app/shared/**', 'app/gradle/**', 'dev/release/shelby*', 'dev/release/test_shelby*', '.github/workflows/tv-release.yml', '.github/workflows/tv-apk.yml']
   workflow_dispatch:
     inputs:
       verify_persistent_signing:

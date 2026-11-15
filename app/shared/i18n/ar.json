@@ -5113,5 +5113,13 @@
  "shelby_update.not_ready": "التحديثات غير جاهزة لهذا الإصدار. ثبّت إصدارًا موثوقًا أولاً.",
  "shelby_update.ask": "هل تريد تنزيل تحديث Shelby+ هذا والتحقق منه؟ سيطلب Android التأكيد قبل التثبيت.",
  "shelby_update.rejected": "لا يوجد تحديث تم التحقق منه أو تعذر التحقق. لم يتم تثبيت أي شيء.",
- "shelby_update.installer_blocked": "حظر Android هذا المثبّت. استخدم ملف APK الذي تم التحقق منه عبر المثبّت المعتاد."
+ "shelby_update.installer_blocked": "حظر Android هذا المثبّت. استخدم ملف APK الذي تم التحقق منه عبر المثبّت المعتاد.",
+ "shelby_update.versions": "الحالي: {current} · المتاح: {available}",
+ "shelby_update.network": "تعذّر الاتصال بـ GitHub. تحقّق من Wi-Fi وحاول مجددًا.",
+ "shelby_update.missing": "لا توجد بيانات تحديث رسمي بعد. لم يتم تثبيت أي شيء.",
+ "shelby_update.tampered": "التنزيل غير مكتمل أو لم يجتز التحقق. حاول مجددًا؛ لم يتم تثبيت أي شيء.",
+ "shelby_update.no_space": "المساحة غير كافية. أفرغ بعض المساحة على التلفزيون وحاول مجددًا.",
+ "shelby_update.cancelled": "أُلغي التحديث. لم يتغيّر التطبيق المثبّت.",
+ "shelby_update.install_failed": "تعذّر على Android تثبيت التحديث. احتفظ بالتطبيق الحالي وحاول مجددًا بإصدار موثوق.",
+ "shelby_update.permission": "اسمح لـ Shelby+ Remote بطلب التثبيت في Android، ثم عُد لتأكيد التحديث."
 }
