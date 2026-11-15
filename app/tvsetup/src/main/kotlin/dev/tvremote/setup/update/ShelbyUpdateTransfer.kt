@@ -12,6 +12,7 @@ internal object ShelbyUpdateTransfer {
     class NoSpace : IOException()
     class Cancelled : Exception()
     class InvalidDownload : Exception()
+    class InstallationFailure : Exception()
 
     fun latest(current: Long, pin: String, text: (String, Int) -> String): ShelbyUpdatePolicy.Candidate? {
         val latest = JSONObject(text("https://api.github.com/repos/${ShelbyUpdatePolicy.REPO}/releases/latest", 65536))
@@ -57,6 +58,7 @@ internal object ShelbyUpdateTransfer {
         is NoSpace -> "shelby_update.no_space"
         is Cancelled -> "shelby_update.cancelled"
         is InvalidDownload -> "shelby_update.tampered"
+        is InstallationFailure -> "shelby_update.install_failed"
         is IOException -> "shelby_update.network"
         else -> "shelby_update.rejected"
     }

@@ -41,6 +41,7 @@ class ShelbyUpdateTransferTest {
         assertEquals("shelby_update.missing", ShelbyUpdateTransfer.errorKey(error as Exception))
     }
     @Test fun installerFailureStorageAndCancellationAreActionable() {
+        assertEquals("shelby_update.install_failed",ShelbyUpdateTransfer.errorKey(ShelbyUpdateTransfer.InstallationFailure()))
         assertNull(ShelbyUpdateTransfer.installationFailure(0))
         assertNull(ShelbyUpdateTransfer.installationFailure(-1))
         assertEquals("shelby_update.install_failed",ShelbyUpdateTransfer.installationFailure(1))

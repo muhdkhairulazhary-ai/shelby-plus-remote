@@ -106,7 +106,10 @@ internal class ShelbyUpdates(private val activity: Activity, private val onVersi
                 ShelbyUpdatePolicy.archive(candidate, info.packageName, code, info.versionName, signers)
                 require(code > ownCode() && !cancelled && alive())
                 // No uninstall: Android's compatible full-install session keeps the existing app data and asks the user.
-                install(apk)
+                try { install(apk) } catch (e: Exception) {
+                    if (activity.cacheDir.usableSpace < candidate.bytes) throw ShelbyUpdateTransfer.NoSpace()
+                    throw ShelbyUpdateTransfer.InstallationFailure()
+                }
                 say(log, T("tv_main.installer_asks"))
             } catch (e: Exception) {
                 if (!cancelled) say(log, T(if (e is IOException && activity.cacheDir.usableSpace < candidate.bytes) "shelby_update.no_space" else ShelbyUpdateTransfer.errorKey(e)))
