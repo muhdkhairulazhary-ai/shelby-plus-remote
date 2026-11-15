@@ -6,6 +6,8 @@ Three version numbers, each bumped only when its own part changes: `VERSION` (th
 
 ## Unreleased
 
+- Shelby+ Remote TV 0.53.0: recreate the uploaded Liquid Glass reference with ambient gradients, transparent remote controls, a floating navigation dock and actual installed-app shortcuts; preserve existing actions, scope gates and official icons. Add Chromium/WebKit interaction and layout checks with downloadable screenshots.
+
 - Shelby+ Remote TV 0.52.2: fix iPhone/PWA icons, favicon and metadata using the official artwork; version icon/manifest URLs and test the real TV web server on port 8765 in an Android TV emulator.
 
 - Shelby+ Remote TV 0.52.1: use the uploaded official logo for the launcher icon, proportional TV banner, startup screen and in-app branding. Remote behavior is unchanged.

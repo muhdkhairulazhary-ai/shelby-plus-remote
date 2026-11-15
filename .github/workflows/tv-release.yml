@@ -74,6 +74,10 @@ jobs:
       - name: Kotlin tests and API lint
         working-directory: app/gradle
         run: ./gradlew --no-daemon :shared:testDebugUnitTest :tvsetup:testDebugUnitTest :shared:lintDebug :tvsetup:lintDebug
+      - uses: actions/download-artifact@v4
+        with:
+          name: shelby-glass-review
+          path: browser-review
       - name: Verify APKs and prepare release assets
         shell: bash
         run: |
@@ -83,7 +87,7 @@ jobs:
           unzip -p distribution/shelby-plus-remote-tv.apk assets/tvkeys.apk > "$RUNNER_TEMP/tvkeys.apk"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs distribution/shelby-plus-remote-tv.apk > distribution/SIGNING-CERTIFICATE.txt
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/tvkeys.apk" > "$RUNNER_TEMP/addon-certificate.txt"
-          gh release download shelby-tv-v0.52.1-1 --pattern SIGNING-CERTIFICATE.txt --output "$RUNNER_TEMP/previous-certificate.txt"
+          gh release download shelby-tv-v0.52.2-2 --pattern SIGNING-CERTIFICATE.txt --output "$RUNNER_TEMP/previous-certificate.txt"
           python3 - <<'PY'
           import os, re, zipfile
           from pathlib import Path
@@ -95,7 +99,7 @@ jobs:
           previous = (Path(os.environ['RUNNER_TEMP']) / 'previous-certificate.txt').read_text()
           compatible = digest(main) == digest(previous)
           Path('distribution/UPDATE-COMPATIBILITY.txt').write_text(
-              'Compared with shelby-tv-v0.52.1-1\n'
+              'Compared with shelby-tv-v0.52.2-2\n'
               + 'Previous signer SHA-256: ' + digest(previous) + '\n'
               + 'Current signer SHA-256: ' + digest(main) + '\n'
               + ('Signer matches; an equal or higher versionCode is also required.\n' if compatible else
@@ -107,6 +111,10 @@ jobs:
           PY
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging distribution/shelby-plus-remote-tv.apk > distribution/APK-INFO.txt
           grep -q "package: name='dev.tvremote.setup'" distribution/APK-INFO.txt
+          cp browser-review/shelby-glass-chromium-390.png distribution/
+          cp browser-review/shelby-glass-webkit-390.png distribution/
+          cp browser-review/shelby-glass-webkit-keyboard.png distribution/
+          cp browser-review/report.json distribution/GLASS-VALIDATION.json
           cp LICENSE distribution/LICENSE
           cp SHELBY.md distribution/INSTALL.md
           (cd distribution && sha256sum shelby-plus-remote-tv.apk > SHA256SUMS)

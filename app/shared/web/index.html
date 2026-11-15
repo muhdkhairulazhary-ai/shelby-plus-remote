@@ -37,7 +37,10 @@
   <div class="banner ok" id="update" data-for="pc" hidden><b id="updtitle"></b><span id="updnote"></span>
     <div class="actions" id="updacts"><button class="primary" id="updgo" data-i18n="page.update">⬆️ Cập nhật</button><button id="updlater" data-i18n="common.later">Để sau</button></div></div>
   <div class="banner warn" id="stale" data-for="pc" hidden><b data-i18n="page.the_part_running_on">🔄 Phần chạy trên máy này vừa được cập nhật</b><span data-i18n="page.in_settings_press_quit">Vào 🛠️ Cài đặt, bấm Tắt rồi mở lại TV Remote để dùng bản mới. Chưa làm thì vài nút sẽ báo lỗi.</span></div>
-  <div class="shelby-brand" data-for="tv"><strong>Shelby+ Remote</strong><span>Your TV. Your Control.</span></div>
+  <div class="shelby-brand" data-for="tv">
+    <div class="shelby-wordmark"><strong>SHELBY<span>+</span></strong><small>REMOTE</small></div>
+    <div class="shelby-headtools"></div>
+  </div>
   <header class="card top">
     <div class="brand"><img class="logo" src="icon-192.png" alt="" width="36" height="36">
       <div><h1 id="name">TV Remote</h1>
@@ -173,7 +176,7 @@
         <div data-adb-banner></div>
         <section class="card wide-only" data-needs="control">
           <h2 data-i18n="remote.open_an_app">🚀 Mở app <span class="muted adbnote lower" data-for="pc" data-i18n="remote.needs_adb">· cần ADB</span></h2>
-          <input id="quickq" type="search" placeholder="Tìm theo tên app" autocomplete="off" data-i18n-placeholder="common.search_by_app_name">
+          <input id="quickq" type="search" placeholder="Tìm theo tên app" aria-label="Tìm theo tên app" autocomplete="off" data-i18n-placeholder="common.search_by_app_name" data-i18n-aria-label="common.search_by_app_name">
           <div class="tiles" id="quick"><div class="muted" data-i18n="remote.apps_appear_when_adb">Danh sách app hiện khi ADB sẵn sàng.</div></div>
         </section>
         <div data-kindintro="screen" hidden></div>
@@ -672,6 +675,7 @@
 <script src="js/quickkeys.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/remote_spec.js"></script>
+<script src="js/shelby.js"></script>
 <script src="js/remote.js"></script>
 <script src="js/screen.js"></script>
 <script src="js/gamepad.js"></script>

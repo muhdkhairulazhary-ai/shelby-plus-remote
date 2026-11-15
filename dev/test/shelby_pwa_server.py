@@ -97,6 +97,11 @@ def main():
         assert body == (WEB / current).read_bytes(), 'Legacy TV icon URL must use new art too'
     status, headers, body = fetch('manifest.json')
     assert status == 200 and json.loads(body)['name'] == 'Shelby+ Remote'
+    for asset in ['js/shelby.js', 'css/shelby.css']:
+        status, headers, body = fetch(asset)
+        assert status == 200 and body == (WEB / asset).read_bytes(), 'Glass UI asset missing from TV-hosted page'
+    status, headers, body = fetch('remote.json')
+    assert status == 200 and json.loads(body)['rows']['shelby'][0][0]['key'] == 'MENU'
     assert fetch('api/state')[0] == 401, 'API must still require pairing'
     assert fetch('api/state', {'Origin': 'http://other.example'})[0] == 403, 'Cross-origin API denied'
     assert fetch('', {'Host': 'other.example'})[0] == 403, 'DNS rebinding guard intact'

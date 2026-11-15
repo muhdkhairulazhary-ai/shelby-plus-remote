@@ -47,7 +47,9 @@ async function loadQuick() {
   }
   const tiles = r.apps.slice().sort((a, b) => appName(a.pkg).localeCompare(appName(b.pkg))).map((a) => {
     const icon = appIcon(a.pkg); icon.fill(META.get(a.pkg) || {});
-    return el('button', { className: 'tile', title: a.pkg, onclick: () => openOnTv(a.pkg, appName(a.pkg)) }, icon, el('span', { textContent: appName(a.pkg) }));
+    const tile = el('button', { className: 'tile', title: CORE === 'tv' ? appName(a.pkg) : a.pkg, onclick: () => openOnTv(a.pkg, appName(a.pkg)) }, icon, el('span', { textContent: appName(a.pkg) }));
+    tile.dataset.pkg = a.pkg; tile.setAttribute('aria-label', appName(a.pkg));
+    return tile;
   });
   const gear = el('div', { className: 'appicon', textContent: '⚙' });
   tiles.push(el('button', { className: 'tile', onclick: () => openOnTv('settings', T('page.settings')) }, gear, el('span', { textContent: T('apps.tv_settings') })));
