@@ -273,3 +273,5 @@ hue; in `button`, `label.filebtn`, `a.linkbtn`, `#toast` and the state marks (`I
 ## Shelby+ Remote (TV core only)
 
 The TV-served page uses a permanent black and charcoal palette, white text and a restrained red action accent. Existing semantic status colours remain. Controls keep their protocol handlers and capability gates. The D-pad grows to 248px within the viewport; touch controls use at least 44px targets, safe-area padding and 16px text fields for iPhone Safari. Other cores retain their existing theme.
+
+Shelby+ TV PWA metadata uses `manifest-shelby-v1.json` and `icon-shelby*v1` assets generated from the same root upload as the TV icon. The TV server maps legacy icon/manifest paths to these files, versions all metadata links and manifest icon URLs, and serves manifests with no-store. Shared phone/computer branding stays separate. The TV theme-color stays #080808. No service worker is registered by the TV page; the website demo worker is unrelated. Existing iOS home-screen installations may need removal and re-adding because iOS keeps their icon independently.

@@ -8,7 +8,10 @@ concurrency:
   group: tv-release-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  tv-web-server:
+    uses: ./.github/workflows/tv-pwa-server.yml
   release:
+    needs: tv-web-server
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -80,7 +83,7 @@ jobs:
           unzip -p distribution/shelby-plus-remote-tv.apk assets/tvkeys.apk > "$RUNNER_TEMP/tvkeys.apk"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs distribution/shelby-plus-remote-tv.apk > distribution/SIGNING-CERTIFICATE.txt
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/tvkeys.apk" > "$RUNNER_TEMP/addon-certificate.txt"
-          gh release download shelby-tv-v0.52.0-1 --pattern SIGNING-CERTIFICATE.txt --output "$RUNNER_TEMP/previous-certificate.txt"
+          gh release download shelby-tv-v0.52.1-1 --pattern SIGNING-CERTIFICATE.txt --output "$RUNNER_TEMP/previous-certificate.txt"
           python3 - <<'PY'
           import os, re, zipfile
           from pathlib import Path
@@ -92,7 +95,7 @@ jobs:
           previous = (Path(os.environ['RUNNER_TEMP']) / 'previous-certificate.txt').read_text()
           compatible = digest(main) == digest(previous)
           Path('distribution/UPDATE-COMPATIBILITY.txt').write_text(
-              'Compared with shelby-tv-v0.52.0-1\n'
+              'Compared with shelby-tv-v0.52.1-1\n'
               + 'Previous signer SHA-256: ' + digest(previous) + '\n'
               + 'Current signer SHA-256: ' + digest(main) + '\n'
               + ('Signer matches; an equal or higher versionCode is also required.\n' if compatible else

@@ -8,9 +8,15 @@ This URL follows the latest published release. Each release also has a permanent
 
 Install on the TV, then open Shelby+ Remote. From iPhone Safari on the same trusted Wi-Fi, open the address shown on the TV (port 8765) and enter the six-digit pairing code. See INSTALL.md for first-time debugging and transfer requirements.
 
-TV app 0.52.1 uses the exact uploaded Shelby+ logo for its launcher icon, proportional 320×180 banner, startup screen and in-app header. Remote functionality, pairing, authentication and security are unchanged.
+TV app 0.52.2 fixes the iPhone Home Screen branding with Shelby+ 180×180 Apple, 192×192 and 512×512 PWA icons and a favicon. The manifest, metadata, theme color and icon URLs use the official artwork and cache versioning. Legacy TV icon URLs also return Shelby+ art. Remote functionality, pairing, authentication and security are unchanged.
 
-The previous release `shelby-tv-v0.52.0-1` used a discarded temporary key, so its signing key is unavailable for in-place updates. A higher versionCode alone does not make a differently signed APK compatible. Public certificate details are attached for comparison. The workflow checks web/Kotlin tests, Android API lint, APK signatures (v1 and v2), the bundled add-on's matching signer, package metadata, and the packaged MIT notice. Build checks do not establish PRISM+ compatibility or keyboard operation on a real TV; these remain unverified.
+After installing this APK, delete the old iPhone Home Screen shortcut (this does not uninstall the TV app), open the TV's address in Safari, reload it, then Share → Add to Home Screen. Use the name Shelby+ Remote. iOS may retain icons for existing shortcuts; if re-adding still shows old art, remove the shortcut again and clear only this TV address in Safari Website Data (this removes its browser pairing), then open Safari, pair again and re-add. No real-iPhone icon verification has been performed.
+
+The Android TV emulator check starts the real TV app's RemoteService and requests its port 8765 through ADB forwarding; it does not use a static mock server. Apple/PWA/favicon bytes, sizes, cache headers, manifest links and pairing/origin guards are checked. Emulator coverage is not physical PRISM+ or iPhone testing.
+
+The installed release `shelby-tv-v0.52.1-1` used a discarded temporary key. Compare the attached public certificate report before attempting an in-place update. A higher versionCode does not make different signing keys compatible.
+
+The workflow checks web/Kotlin tests, Android API lint, APK signatures (v1 and v2), the bundled add-on's matching signer, package metadata, and the packaged MIT notice. Build checks do not establish PRISM+ compatibility or keyboard operation on a real TV; these remain unverified.
 
 Signing:
 
