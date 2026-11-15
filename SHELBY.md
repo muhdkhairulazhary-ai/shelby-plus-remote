@@ -32,3 +32,9 @@ Release APKs are checked with Android `apksigner` for v1/v2 signatures, and the 
 Target: PRISM+ Android 11 Google TV and iPhone Safari. These are targets, **not verified device compatibility**. No real TV or physical iPhone was available during implementation; keyboard input has not been tested on a real TV. CI tests and an APK build do not establish device compatibility.
 
 Build locally with JDK 17 and Android SDK 35: `app/tvsetup/build.sh`. Existing output remains `app/tvsetup/build/tv-setup.apk`; Actions packages it as `shelby-plus-remote-tv.apk`.
+
+## Official TV artwork (0.52.1)
+
+The launcher icon uses the exact root upload `0EC7D146-3DDF-4716-8FAC-91805B16C55B.png` (commit `6ebd84e`). The 320×180 Android TV banner fits the complete square logo on black without stretching or cropping. The startup screen and in-app header use the same branding. Regenerate only these resources with `python3 dev/gen/shelby_art.py`; verify them with `--check` (Pillow required).
+
+The previous release `shelby-tv-v0.52.0-1` used a discarded temporary key. Its private key is unavailable, so a differently signed 0.52.1 APK cannot update that installation in place, even though its versionCode increases. Check the public `SIGNING-CERTIFICATE.txt` assets for the exact signer fingerprints. Removing an older app and its keys add-on for a fresh install loses local state; no private keys are released.

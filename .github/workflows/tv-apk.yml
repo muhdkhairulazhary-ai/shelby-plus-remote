@@ -30,6 +30,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Install Android build dependencies
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Check official TV branding
+        run: |
+          python3 -m pip install Pillow==12.0.0
+          python3 dev/gen/shelby_art.py --check
       - name: Web checks
         run: node --test app/shared/tests/*.test.js
       - name: Build signed test APK and bundled keys add-on

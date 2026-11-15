@@ -45,6 +45,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Install Android build dependencies
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Check official TV branding
+        run: |
+          python3 -m pip install Pillow==12.0.0
+          python3 dev/gen/shelby_art.py --check
       - name: Web checks
         run: node --test app/shared/tests/*.test.js
       - name: Restore private signing key if configured
@@ -76,6 +80,7 @@ jobs:
           unzip -p distribution/shelby-plus-remote-tv.apk assets/tvkeys.apk > "$RUNNER_TEMP/tvkeys.apk"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs distribution/shelby-plus-remote-tv.apk > distribution/SIGNING-CERTIFICATE.txt
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/tvkeys.apk" > "$RUNNER_TEMP/addon-certificate.txt"
+          gh release download shelby-tv-v0.52.0-1 --pattern SIGNING-CERTIFICATE.txt --output "$RUNNER_TEMP/previous-certificate.txt"
           python3 - <<'PY'
           import os, re, zipfile
           from pathlib import Path
@@ -84,6 +89,14 @@ jobs:
           def digest(s):
               return re.search(r'^Signer #1 certificate SHA-256 digest: (\S+)$', s, re.M).group(1)
           assert digest(main) == digest(addon), 'TV app and add-on must share a signer'
+          previous = (Path(os.environ['RUNNER_TEMP']) / 'previous-certificate.txt').read_text()
+          compatible = digest(main) == digest(previous)
+          Path('distribution/UPDATE-COMPATIBILITY.txt').write_text(
+              'Compared with shelby-tv-v0.52.0-1\n'
+              + 'Previous signer SHA-256: ' + digest(previous) + '\n'
+              + 'Current signer SHA-256: ' + digest(main) + '\n'
+              + ('Signer matches; an equal or higher versionCode is also required.\n' if compatible else
+                 'Signer differs: in-place update is not possible. A fresh install is required; removing the previous app and keys add-on loses local settings and pairings.\n'))
           assert 'Verified using v1 scheme (JAR signing): true' in main, 'Android 5 installation needs v1 signing'
           assert 'Verified using v2 scheme (APK Signature Scheme v2): true' in main, 'APK v2 signature missing'
           with zipfile.ZipFile('distribution/shelby-plus-remote-tv.apk') as apk:
@@ -101,6 +114,8 @@ jobs:
           cp .github/release-notes/shelby-tv.md "$RUNNER_TEMP/release-notes.md"
           printf '\nSigning mode for this release: **%s**.\n' "$SIGNING_MODE" >> "$RUNNER_TEMP/release-notes.md"
           printf '\nAPK version: %s. Source commit: %s.\n' "$(cat app/tvsetup/VERSION)" "$GITHUB_SHA" >> "$RUNNER_TEMP/release-notes.md"
+          printf '\nUpdate compatibility:\n\n' >> "$RUNNER_TEMP/release-notes.md"
+          cat distribution/UPDATE-COMPATIBILITY.txt >> "$RUNNER_TEMP/release-notes.md"
           gh release create "$GITHUB_REF_NAME" --verify-tag --draft \
             --title "Shelby+ Remote $GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/release-notes.md"
           gh release upload "$GITHUB_REF_NAME" distribution/*

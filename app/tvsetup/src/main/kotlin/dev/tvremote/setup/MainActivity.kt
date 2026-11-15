@@ -252,7 +252,8 @@ class MainActivity : Activity() {
         val head = LinearLayout(this)
         head.gravity = Gravity.CENTER_VERTICAL
         val logo = ImageView(this)
-        logo.setImageResource(R.drawable.icon)
+        logo.setImageResource(R.drawable.shelby_icon)
+        logo.scaleType = ImageView.ScaleType.FIT_CENTER
         logo.outlineProvider = object : android.view.ViewOutlineProvider() {
             override fun getOutline(v: View, o: android.graphics.Outline) { o.setRoundRect(0, 0, v.width, v.height, resources.getDimension(R.dimen.tv_head_radius)) }
         }
@@ -326,7 +327,7 @@ class MainActivity : Activity() {
             val row = LinearLayout(this)
             row.clipChildren = false
             row.gravity = Gravity.CENTER_VERTICAL
-            val pics = mapOf("home" to R.drawable.eco_home, "channels" to R.drawable.eco_channels, "games" to R.drawable.eco_games, "apps" to R.drawable.eco_tvapps, "voice" to R.drawable.eco_voice, "setup" to R.drawable.banner)
+            val pics = mapOf("home" to R.drawable.eco_home, "channels" to R.drawable.eco_channels, "games" to R.drawable.eco_games, "apps" to R.drawable.eco_tvapps, "voice" to R.drawable.eco_voice, "setup" to R.drawable.shelby_banner)
             eco = (listOf(SELF) + dev.tvremote.core.ontv.Bundle.apps.let { b -> val g = b.indexOfFirst { it.pkg.endsWith(".games") }.let { if (it < 0) b.size else it }; b.take(g) + VOICE + b.drop(g) })   // TV Voice before TV Games (the user, 2026-11-03)
                 .mapNotNull { a -> pics[a.pkg.substringAfterLast('.')]?.let { Eco(a, it) } }   // an app with no banner here yet is left out
             eco.forEachIndexed { i, e -> row.addView(e, LinearLayout.LayoutParams(-2, -2).apply { if (i > 0) leftMargin = dp(14) }) }

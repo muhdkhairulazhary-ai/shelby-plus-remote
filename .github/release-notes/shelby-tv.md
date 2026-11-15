@@ -8,7 +8,9 @@ This URL follows the latest published release. Each release also has a permanent
 
 Install on the TV, then open Shelby+ Remote. From iPhone Safari on the same trusted Wi-Fi, open the address shown on the TV (port 8765) and enter the six-digit pairing code. See INSTALL.md for first-time debugging and transfer requirements.
 
-The existing APK is built without functionality changes. The workflow checks web/Kotlin tests, Android API lint, APK signatures (v1 and v2), the bundled add-on's matching signer, package metadata, and the packaged MIT notice. Build checks do not establish PRISM+ compatibility or keyboard operation on a real TV; these remain unverified.
+TV app 0.52.1 uses the exact uploaded Shelby+ logo for its launcher icon, proportional 320×180 banner, startup screen and in-app header. Remote functionality, pairing, authentication and security are unchanged.
+
+The previous release `shelby-tv-v0.52.0-1` used a discarded temporary key, so its signing key is unavailable for in-place updates. A higher versionCode alone does not make a differently signed APK compatible. Public certificate details are attached for comparison. The workflow checks web/Kotlin tests, Android API lint, APK signatures (v1 and v2), the bundled add-on's matching signer, package metadata, and the packaged MIT notice. Build checks do not establish PRISM+ compatibility or keyboard operation on a real TV; these remain unverified.
 
 Signing:
 

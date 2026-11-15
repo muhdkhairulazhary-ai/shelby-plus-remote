@@ -323,3 +323,5 @@ They mirror the web UI (`app/shared/web`, `css/kit.css`), not the TV apps.
 ## Shelby+ Remote fork
 
 TV Setup is presented as Shelby+ Remote, with the tagline “Your TV. Your Control.” MainActivity uses red action accents over the existing dark TV surfaces. Shared TV components and other apps retain their tokens. Package IDs, permissions and stored names stay compatible.
+
+Shelby+ TV artwork comes from the exact root upload `0EC7D146-3DDF-4716-8FAC-91805B16C55B.png`. `dev/gen/shelby_art.py` copies it byte-for-byte to `drawable-nodpi/shelby_icon.png`, fits it without cropping or stretching on a black 320×180 xhdpi TV banner, and makes a 160×160 startup bitmap. Only MainActivity uses the branding startup theme (including Android 12+ splash attributes); no delay or additional activity is introduced. The header uses FIT_CENTER, and its attribution stays visible. The upstream art generators use different resource names.

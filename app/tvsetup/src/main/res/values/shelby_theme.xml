@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="shelby_start_background">#080808</color>
+    <style name="ShelbyLaunchTheme" parent="android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@drawable/shelby_splash</item>
+    </style>
+</resources>

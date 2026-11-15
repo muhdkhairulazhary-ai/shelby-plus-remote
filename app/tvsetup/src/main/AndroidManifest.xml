@@ -29,9 +29,9 @@
     </queries>
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-    <application android:name=".SetupApp" android:label="Shelby+ Remote" android:icon="@drawable/icon" android:banner="@drawable/banner"
+    <application android:name=".SetupApp" android:label="Shelby+ Remote" android:icon="@drawable/shelby_icon" android:banner="@drawable/shelby_banner"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar" android:allowBackup="false" android:networkSecurityConfig="@xml/net">
-        <activity android:name=".MainActivity" android:exported="true" android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize">
+        <activity android:name=".MainActivity" android:theme="@style/ShelbyLaunchTheme" android:exported="true" android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

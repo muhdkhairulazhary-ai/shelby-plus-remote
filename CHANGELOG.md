@@ -6,6 +6,8 @@ Three version numbers, each bumped only when its own part changes: `VERSION` (th
 
 ## Unreleased
 
+- Shelby+ Remote TV 0.52.1: use the uploaded official logo for the launcher icon, proportional TV banner, startup screen and in-app branding. Remote behavior is unchanged.
+
 - Shelby+ Remote: add tag-triggered GitHub Release APK distribution, signing verification, checksums and Downloader installation instructions.
 
 - Shelby+ Remote: rebrand the TV app and TV browser page; add a dark iPhone remote design and an automatic APK artifact workflow.
