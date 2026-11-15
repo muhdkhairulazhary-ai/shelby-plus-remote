@@ -453,11 +453,7 @@ class MainActivity : Activity() {
 
     private fun autoText() = if (AutoUpdate.on(this)) T("tv_main.automatic_updates_on") else T("tv_main.automatic_updates_off")
 
-    /**
-     * Downloads this app's APK from the latest GitHub release and installs it through the TV's own ADB (no "unknown sources"
-     * needed), with SetupUpdate's script: it opens this screen again once the new version runs, or the old one if it does not.
-     */
-    /** The Update tile: update now, automatic updates on or off, and removing this app, kept out of the way here. */
+    /** Manual pinned Shelby release check and the existing removal action; installation always requires user confirmation. */
     private fun updateMenu() {
         if (busy) return
         menu("Shelby+ Remote " + version(), listOf(
