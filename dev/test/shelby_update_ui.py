@@ -20,12 +20,18 @@ def main():
     output=Path(sys.argv[1]); output.mkdir(parents=True,exist_ok=True)
     version=Path('app/tvsetup/VERSION').read_text().strip()
     ui=tree()
+    (output/"initial.xml").write_bytes(ET.tostring(ui))
+    (output/"initial.png").write_bytes(adb("exec-out","screencap","-p"))
     tile=next(n for n in ui.iter('node') if n.get('content-desc')==f'Shelby+ Remote {version}' and n.get('clickable')=='true')
     x1,y1,x2,y2=map(int,re.findall(r'\d+',tile.get('bounds')))
     adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2))
     ui=tree()
+    (output/'menu.xml').write_bytes(ET.tostring(ui))
+    (output/'shelby-update-menu.png').write_bytes(adb('exec-out','screencap','-p'))
     check=next(n for n in ui.iter('node') if n.get('text')=='Check for updates')
-    assert check.get('focusable')=='true' and check.get('focused')=='true','Update button must have initial remote focus'
+    parents={child:parent for parent in ui.iter() for child in parent}
+    while check.get('focusable')!='true': check=parents[check]
+    assert check.get('focused')=='true','Update button must have initial remote focus'
     assert any(n.get('text')==f'Shelby+ Remote {version}' for n in ui.iter('node'))
     (output/'shelby-update-menu.png').write_bytes(adb('exec-out','screencap','-p'))
     adb('shell','input','keyevent','23') # DPAD_CENTER, no touch-only flow

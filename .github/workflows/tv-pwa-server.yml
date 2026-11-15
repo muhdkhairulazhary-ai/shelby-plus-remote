@@ -71,6 +71,7 @@ jobs:
           cp /tmp/shelby-pwa-logcat.txt evidence/logcat.txt 2>/dev/null || true
           cp /tmp/shelby-update-ui.txt evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui/*.png evidence/ 2>/dev/null || true
+          cp /tmp/shelby-update-ui/*.xml evidence/ 2>/dev/null || true
           cat evidence/shelby-update-ui.txt 2>/dev/null || true
           cat evidence/shelby-pwa-server.txt 2>/dev/null || true
       - uses: actions/upload-artifact@v4
