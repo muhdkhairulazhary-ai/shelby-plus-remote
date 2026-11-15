@@ -179,3 +179,5 @@ Editing `app/shared/web` needs only a page reload; Kotlin needs a rebuild. Insid
 Credits: [scrcpy](https://github.com/Genymobile/scrcpy) (Apache-2.0), [JMuxer](https://github.com/samirkumardas/jmuxer) (MIT), [webview](https://github.com/webview/webview) (MIT), [JNA](https://github.com/java-native-access/jna) (Apache-2.0); the table games follow [gamehub24](https://gamehub24.pages.dev).
 
 Shelby+ fork builds and protected permanent signing: [SIGNING.md](../SIGNING.md). Validation APKs use explicit disposable keys and are not release updates.
+
+The Shelby browser regression uses the real shared scripts and a threaded loopback HTTP fixture with simulated TV state. App launch includes 250ms fixture latency: activation completion is not server completion. Register Playwright's response listener before click/tap, then verify the new POST payload, successful response and paired fixture receipt; never accept an old request or replace this synchronization with a fixed sleep. The actual emulator server separately checks real pairing/origin guards on port 8765.
