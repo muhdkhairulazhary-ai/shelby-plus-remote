@@ -1,5 +1,26 @@
 > **Shelby+ Remote — Your TV. Your Control.** Fork setup, APK artifacts, iPhone installation and validation limits: [SHELBY.md](SHELBY.md).
 
+
+## Bản phát hành Shelby+ và cập nhật
+
+Bản chính thức chỉ được tạo thủ công từ `main`, dùng môi trường bảo vệ `shelby-release` và khóa ký cố định hiện có. Không tạo lại hoặc đổi khóa. Kiểm tra khóa đã đạt ở [lần chạy #13](https://github.com/muhdkhairulazhary-ai/shelby-plus-remote/actions/runs/43745151825). PR này chưa phát hành APK.
+
+Sửa `app/tvsetup/VERSION` và ghi chú phát hành qua PR, rồi sau khi được duyệt và gộp, vào Actions → Shelby+ Remote TV Release → Run workflow, chọn main và nhập đúng phiên bản đã lưu (đang chuẩn bị 0.53.2, mã 105302). Duyệt môi trường nếu được yêu cầu. Mỗi phần phiên bản từ 0–99; mã Android = 100000 + major×10000 + minor×100 + patch, luôn phải tăng. Không ghi đè thẻ hay bản phát hành. Lần chuyển đầu từ khóa tạm cần xem cảnh báo mất dữ liệu và đặt `SHELBY_INITIAL_MIGRATION_APPROVED=true`, rồi bỏ cờ này sau đó. Giữ nguyên mọi bí mật ký và dấu vân tay chứng chỉ.
+
+Tải `shelby-plus-remote-tv.apk` ở Releases bằng Downloader trên TV:
+`https://github.com/muhdkhairulazhary-ai/shelby-plus-remote/releases/latest/download/shelby-plus-remote-tv.apk`
+
+URL này hiện vẫn trỏ đến bản đã phát hành trước đó; chỉ đổi sau khi bản chính thức mới được công bố. Không có mã Downloader dạng số. Cài bằng remote vật lý, mở Shelby+ Remote, rồi dùng Safari iPhone cùng Wi-Fi mở địa chỉ TV hiển thị ở cổng 8765 và ghép nối. APK thử trong Actions không dùng để cập nhật bản chính thức.
+
+Lần sau, chọn banner Shelby+ Remote trên TV → Kiểm tra cập nhật, đọc phiên bản hiện tại/bản mới và ghi chú, rồi xác nhận cập nhật. Android chỉ mở yêu cầu quyền cài khi cần; quay lại và xác nhận lần nữa. Android vẫn hỏi trước khi cài. Cùng tên gói, cùng chứng chỉ và mã tăng sẽ giữ ghép nối/cài đặt: không gỡ app hoặc xóa dữ liệu. Safari cần giữ địa chỉ TV và dữ liệu trình duyệt để giữ đăng nhập.
+
+Nếu tải hoặc cài lỗi, giữ app hiện tại, kiểm tra Wi-Fi/chỗ trống và thử lại, hoặc dùng APK đã kiểm tra ở Releases qua Downloader. Android không cho hạ mã phiên bản như một cập nhật thường: cần bản sửa có mã cao hơn và cùng khóa ký. Lỗi cài được hiện khi quay lại hoặc mở app lần sau. Bản dùng khóa tạm đã bỏ cần cài mới một lần, mất dữ liệu riêng và phải ghép nối lại.
+
+Chỉ có iPhone: đăng nhập GitHub trong Safari, mở Actions (Yêu cầu trang web cho máy tính nếu thiếu nút), chạy workflow main với đúng phiên bản, duyệt môi trường và chờ thành công. Vào Releases đọc lưu ý rồi chép URL APK vào Downloader trên TV bằng remote. Không cần máy tính hay cài APK trên iPhone; có thể cần người duyệt khác cho môi trường ký.
+
+Sao lưu keystore đã mã hóa và mật khẩu ở các nơi ngoại tuyến riêng biệt; GitHub secrets không thay thế bản sao lưu. Không đưa khóa, mật khẩu hay chuỗi Base64 lên git hoặc Releases. Mất khóa sẽ không ký được cập nhật tương thích. Nếu lộ khóa, dừng phát hành và lập kế hoạch chuyển đổi; app không chấp nhận đổi chứng chỉ. Chi tiết quản trị, khôi phục và giới hạn: [SIGNING.md](SIGNING.md), [hướng dẫn tiếng Anh](README.md#shelby-production-releases-and-updates).
+
+
 <p align="center"><img src="docs/img/icon.png" width="88" alt="TV Remote"></p>
 
 <h1 align="center">TV Remote</h1>

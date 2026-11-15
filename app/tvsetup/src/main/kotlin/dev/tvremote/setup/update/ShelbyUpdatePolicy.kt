@@ -9,7 +9,7 @@ internal object ShelbyUpdatePolicy {
     const val PACKAGE = "dev.tvremote.setup"
     const val ASSET = "shelby-plus-remote-tv.apk"
     const val MAX_APK = 64L * 1024 * 1024
-    data class Candidate(val version: String, val code: Long, val url: String, val sha256: String, val bytes: Long, val signer: String)
+    data class Candidate(val version: String, val code: Long, val url: String, val sha256: String, val bytes: Long, val signer: String, val notes: String = "", val date: String = "")
 
     fun fingerprint(value: String): String = value.replace(":", "").lowercase().also {
         require(it.matches(Regex("[0-9a-f]{64}"))) { "Invalid certificate fingerprint" }
@@ -20,6 +20,11 @@ internal object ShelbyUpdatePolicy {
         require(tag.matches(Regex("shelby-tv-v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+"))) { "Invalid release tag" }
         val o = JSONObject(json)
         require(o.getInt("schema") == 1 && o.getString("packageName") == PACKAGE) { "Wrong update package" }
+        require(o.getString("channel") == "production") { "Not a production release" }
+        val notes = o.getString("releaseNotes")
+        val date = o.getString("releaseDate")
+        require(notes.isNotBlank() && notes.length <= 6000) { "Invalid release notes" }
+        require(date.matches(Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"))) { "Invalid release date" }
         val version = o.getString("version")
         require(version.matches(Regex("[0-9]{1,2}\\.[0-9]{1,2}\\.[0-9]{1,2}"))) { "Invalid version" }
         require(tag.startsWith("shelby-tv-v$version-")) { "Tag/version mismatch" }
@@ -34,7 +39,7 @@ internal object ShelbyUpdatePolicy {
         require(bytes in 1..MAX_APK) { "Invalid APK size" }
         val signer = fingerprint(o.getString("certificateSha256"))
         require(signer == fingerprint(pin)) { "Update signer changed" }
-        return if (code <= current) null else Candidate(version, code, url, sha, bytes, signer)
+        return if (code <= current) null else Candidate(version, code, url, sha, bytes, signer, notes, date)
     }
 
     fun archive(candidate: Candidate, packageName: String, code: Long, version: String?, signers: List<String>) {

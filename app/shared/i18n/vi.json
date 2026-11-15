@@ -4716,5 +4716,13 @@
  "shelby_update.not_ready": "Bản này chưa thể cập nhật. Hãy cài bản phát hành đáng tin cậy trước.",
  "shelby_update.ask": "Tải và kiểm tra bản cập nhật Shelby+ này? Android sẽ hỏi trước khi cài.",
  "shelby_update.rejected": "Chưa có bản cập nhật đã xác minh hoặc kiểm tra thất bại. Chưa cài gì.",
- "shelby_update.installer_blocked": "Android đã chặn trình cài này. Hãy cài APK đã xác minh bằng trình cài bạn thường dùng."
+ "shelby_update.installer_blocked": "Android đã chặn trình cài này. Hãy cài APK đã xác minh bằng trình cài bạn thường dùng.",
+ "shelby_update.versions": "Đang dùng: {current} · Bản mới: {available}",
+ "shelby_update.network": "Không kết nối được GitHub. Kiểm tra Wi-Fi rồi thử lại.",
+ "shelby_update.missing": "Chưa có thông tin bản cập nhật chính thức. Chưa cài gì cả.",
+ "shelby_update.tampered": "Tải chưa đủ hoặc tệp không khớp. Hãy thử lại; chưa cài gì cả.",
+ "shelby_update.no_space": "TV không đủ chỗ trống. Dọn bớt rồi thử lại.",
+ "shelby_update.cancelled": "Đã hủy cập nhật. App đang dùng vẫn như cũ.",
+ "shelby_update.install_failed": "Android không cài được bản cập nhật. Giữ app hiện tại rồi thử lại bằng bản phát hành đã kiểm tra.",
+ "shelby_update.permission": "Cho phép Shelby+ Remote yêu cầu cài app trong Android, rồi quay lại đây để xác nhận cập nhật."
 }

@@ -6,6 +6,8 @@ Three version numbers, each bumped only when its own part changes: `VERSION` (th
 
 ## Unreleased
 
+- Shelby+ production: manual reviewed-version releases with permanent certificate checks, production-only metadata, release notes and user-confirmed Android updates with network/storage/installer recovery.
+
 - Shelby+ TV: constrain long YouTube/SmartTube metadata and media controls on iPhone Safari; add WebKit overflow regression coverage.
 - Shelby+ TV: require pinned permanent release signing and matching bundled add-on certificates; add a manual, user-confirmed, certificate-verified GitHub update checker. Temporary-key installations need a one-time migration.
 

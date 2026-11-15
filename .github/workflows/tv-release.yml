@@ -1,16 +1,22 @@
 name: Shelby+ Remote TV Release
 on:
-  push:
-    tags: ['shelby-tv-v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Reviewed TV version (must match app/tvsetup/VERSION)'
+        required: true
+        type: string
 permissions:
   contents: read
 concurrency:
-  group: tv-release-${{ github.ref }}
+  group: shelby-production-release
   cancel-in-progress: false
 jobs:
   tv-web-server:
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/tv-pwa-server.yml
   release:
+    if: github.ref == 'refs/heads/main'
     needs: tv-web-server
     environment: shelby-release
     runs-on: ubuntu-latest
@@ -20,6 +26,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      RELEASE_VERSION: ${{ inputs.version }}
       SHELBY_TV_KEYSTORE_BASE64: ${{ secrets.SHELBY_TV_KEYSTORE_BASE64 }}
       SHELBY_STORE_PASSWORD: ${{ secrets.SHELBY_STORE_PASSWORD }}
       SHELBY_KEY_PASSWORD: ${{ secrets.SHELBY_KEY_PASSWORD }}
@@ -28,20 +35,8 @@ jobs:
       SHELBY_INITIAL_MIGRATION_APPROVED: ${{ vars.SHELBY_INITIAL_MIGRATION_APPROVED }}
     steps:
       - uses: actions/checkout@v4
-      - name: Validate tag and refuse an existing release
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ "$GITHUB_REF_NAME" =~ ^shelby-tv-v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$ ]]
-          [[ "$GITHUB_REF_NAME" == "shelby-tv-v$(cat app/tvsetup/VERSION)-"* ]]
-          # Fail closed on API errors; never replace assets of an existing release.
-          gh api "repos/$GH_REPO/releases?per_page=100" > "$RUNNER_TEMP/releases.json"
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          releases = json.loads((Path(os.environ['RUNNER_TEMP']) / 'releases.json').read_text())
-          assert all(r['tag_name'] != os.environ['GITHUB_REF_NAME'] for r in releases), 'Release already exists; use a new distribution tag'
-          PY
+      - name: Validate reviewed version and refuse existing tags
+        run: python3 dev/release/shelby_preflight.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -83,10 +78,8 @@ jobs:
           unzip -p distribution/shelby-plus-remote-tv.apk assets/tvkeys.apk > "$RUNNER_TEMP/tvkeys.apk"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs distribution/shelby-plus-remote-tv.apk > distribution/SIGNING-CERTIFICATE.txt
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$RUNNER_TEMP/tvkeys.apk" > "$RUNNER_TEMP/addon-certificate.txt"
-          gh api "repos/$GH_REPO/releases/latest" > "$RUNNER_TEMP/previous-release.json"
-          previous_tag="$(python3 -c 'import json,os; print(json.load(open(os.environ["RUNNER_TEMP"]+"/previous-release.json"))["tag_name"])')"
-          gh release download "$previous_tag" --pattern SIGNING-CERTIFICATE.txt --output "$RUNNER_TEMP/previous-certificate.txt"
-          gh release download "$previous_tag" --pattern APK-INFO.txt --output "$RUNNER_TEMP/previous-apk-info.txt"
+          gh release download "$PREVIOUS_TAG" --pattern SIGNING-CERTIFICATE.txt --output "$RUNNER_TEMP/previous-certificate.txt"
+          gh release download "$PREVIOUS_TAG" --pattern APK-INFO.txt --output "$RUNNER_TEMP/previous-apk-info.txt"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging distribution/shelby-plus-remote-tv.apk > distribution/APK-INFO.txt
           python3 dev/release/shelby_release.py
           python3 - <<'PYCODE'
@@ -100,21 +93,25 @@ jobs:
           cp browser-review/shelby-glass-webkit-keyboard.png distribution/
           cp browser-review/report.json distribution/GLASS-VALIDATION.json
           cp LICENSE distribution/LICENSE
+          cp SIGNING.md distribution/SIGNING.md
           cp SHELBY.md distribution/INSTALL.md
           (cd distribution && sha256sum shelby-plus-remote-tv.apk > SHA256SUMS)
       - name: Publish complete GitHub Release
         shell: bash
         run: |
           set -euo pipefail
+          # Repeat public gates after the build; serialize production runs and never overwrite tags/assets.
+          python3 dev/release/shelby_preflight.py
           cp .github/release-notes/shelby-tv.md "$RUNNER_TEMP/release-notes.md"
           printf '\nSigning mode for this release: **%s**.\n' "$SIGNING_MODE" >> "$RUNNER_TEMP/release-notes.md"
           printf '\nAPK version: %s. Source commit: %s.\n' "$(cat app/tvsetup/VERSION)" "$GITHUB_SHA" >> "$RUNNER_TEMP/release-notes.md"
           printf '\nUpdate compatibility:\n\n' >> "$RUNNER_TEMP/release-notes.md"
           cat distribution/UPDATE-COMPATIBILITY.txt >> "$RUNNER_TEMP/release-notes.md"
-          gh release create "$GITHUB_REF_NAME" --verify-tag --draft \
-            --title "Shelby+ Remote $GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/release-notes.md"
-          gh release upload "$GITHUB_REF_NAME" distribution/*
-          gh release edit "$GITHUB_REF_NAME" --draft=false --latest
+          gh api --method POST "repos/$GH_REPO/git/refs" -f "ref=refs/tags/$RELEASE_TAG" -f "sha=$GITHUB_SHA" > /dev/null
+          gh release create "$RELEASE_TAG" --verify-tag --draft \
+            --title "Shelby+ Remote $RELEASE_VERSION" --notes-file "$RUNNER_TEMP/release-notes.md"
+          gh release upload "$RELEASE_TAG" distribution/*
+          gh release edit "$RELEASE_TAG" --draft=false --latest
       - name: Remove private build keys
         if: always()
         run: rm -f "$RUNNER_TEMP/shelby-release.jks" "$RUNNER_TEMP/tvkeys.apk"

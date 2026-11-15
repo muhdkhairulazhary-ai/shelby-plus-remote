@@ -4854,5 +4854,13 @@
  "shelby_update.not_ready": "Updates are not ready for this build. Install a trusted release first.",
  "shelby_update.ask": "Download and verify this Shelby+ update? Android will ask before installation.",
  "shelby_update.rejected": "No verified update is available, or verification failed. Nothing was installed.",
- "shelby_update.installer_blocked": "Android blocked this installer. Use the verified release APK through your usual installer."
+ "shelby_update.installer_blocked": "Android blocked this installer. Use the verified release APK through your usual installer.",
+ "shelby_update.versions": "Current: {current} · Available: {available}",
+ "shelby_update.network": "Could not reach GitHub. Check Wi-Fi and try again.",
+ "shelby_update.missing": "No production update metadata is available yet. Nothing was installed.",
+ "shelby_update.tampered": "The download is incomplete or its checksum differs. Try again; nothing was installed.",
+ "shelby_update.no_space": "Not enough free storage. Free some space on the TV and try again.",
+ "shelby_update.cancelled": "Update cancelled. The installed app is unchanged.",
+ "shelby_update.install_failed": "Android could not install the update. Keep the current app and try again from a verified release.",
+ "shelby_update.permission": "Allow Shelby+ Remote to request installation in Android, then return here to confirm the update."
 }

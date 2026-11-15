@@ -457,11 +457,11 @@ class MainActivity : Activity() {
     private fun updateMenu() {
         if (busy) return
         menu("Shelby+ Remote " + version(), listOf(
-            TvUi.Item(R.drawable.ic_download, T("tv_main.update_now")) { shelbyUpdates.check { log(it) } },
+            TvUi.Item(R.drawable.ic_download, T("tv_main.update_check")) { shelbyUpdates.check { log(it) } },
             TvUi.Item(R.drawable.ic_trash, T("tv_main.remove_tv_setup")) { askRemove() }))
     }
 
-    private val shelbyUpdates by lazy { dev.tvremote.setup.update.ShelbyUpdates(this) }
+    private val shelbyUpdates by lazy { dev.tvremote.setup.update.ShelbyUpdates(this) { newer = it; showUpdate() } }
 
     /** How the last update went, said once on this screen when it is recent: a version that was undone is worth knowing about. */
     private fun lastUpdate(a: Adb) {
@@ -481,7 +481,7 @@ class MainActivity : Activity() {
         log(line)
     }
 
-    override fun onPause() { shown = false; super.onPause() }
+    override fun onPause() { shelbyUpdates.pause(); shown = false; super.onPause() }
 
     /** TV Setup Voice installs on its own thread ([MicVoice.syncOffline]: started by its screen, TV Home's mic tile or a phone),
      *  so the log and the bar follow it from here while this screen shows (the user, 2026-11-03: the log said nothing). */
@@ -546,6 +546,7 @@ class MainActivity : Activity() {
             startActivity(android.content.Intent(this, PinActivity::class.java).putExtra("pkg", packageName))
         }
         shown = true
+        shelbyUpdates.resume { log(it) }
         kidsOffTile.view.visibility = if (Rules.kidsMode(Rules.load(this))) View.VISIBLE else View.GONE
         voiceWatch()
         if (MicVoice.on(this)) Thread({ micBlockLog() }, "mic-block").apply { isDaemon = true }.start()   // off: nothing is read

@@ -22,6 +22,7 @@ def module(name):
 
 release = module('shelby_release')
 signing = module('shelby_signing')
+preflight = module('shelby_preflight')
 PIN = 'a'*64
 OLD = 'b'*64
 
@@ -61,6 +62,19 @@ class SigningPolicyTest(unittest.TestCase):
         self.assertFalse(release.identity(report(PIN), report(PIN), PIN, report(OLD), False, True))
         self.assertTrue(release.identity(report(PIN), report(PIN), PIN, report(PIN), True, False))
 
+    def test_duplicate_tag_duplicate_version_and_downgrade_are_rejected(self):
+        previous = dict(tag_name='shelby-tv-v0.53.1-1',draft=False,prerelease=False)
+        self.assertEqual(preflight.validate('0.53.2','0.53.2',[previous],[]),'shelby-tv-v0.53.2-1')
+        for version in ['0.53.0','0.53.1']:
+            with self.assertRaises(ValueError): preflight.validate(version,version,[previous],[])
+        with self.assertRaises(ValueError): preflight.validate('0.53.2','0.53.2',[],[dict(ref='refs/tags/shelby-tv-v0.53.2-1')])
+        with self.assertRaises(ValueError): preflight.validate('0.53.2','0.53.1',[],[])
+        with self.assertRaises(ValueError): preflight.version_code('0.053.2')
+
+    def test_missing_signature_scheme_is_rejected_for_both_apks(self):
+        for main,addon in [(report(PIN).replace('true','false'),report(PIN)),(report(PIN),report(PIN).replace('true','false'))]:
+            with self.assertRaises(ValueError): release.identity(main,addon,PIN,report(PIN),True,False)
+
     def test_version_code_must_increase_and_package_stays_stable(self):
         with tempfile.TemporaryDirectory() as directory:
             apk = Path(directory)/'test.apk'; apk.write_bytes(b'verified elsewhere')
@@ -68,6 +82,9 @@ class SigningPolicyTest(unittest.TestCase):
             new = "package: name='dev.tvremote.setup' versionCode='105301' versionName='0.53.1'"
             value = release.metadata(apk,new,old,'0.53.1','shelby-tv-v0.53.1-1','owner/repo',PIN)
             self.assertEqual(value['versionCode'],105301)
+            self.assertEqual(value['channel'],'production')
+            self.assertTrue(value['releaseNotes'])
+            self.assertRegex(value['releaseDate'],r'^\d{4}-\d{2}-\d{2}T')
             with self.assertRaises(ValueError): release.metadata(apk,old,old,'0.53.0','shelby-tv-v0.53.0-2','owner/repo',PIN)
             with self.assertRaises(ValueError): release.metadata(apk,new.replace('dev.tvremote.setup','wrong.app'),old,'0.53.1','shelby-tv-v0.53.1-1','owner/repo',PIN)
 

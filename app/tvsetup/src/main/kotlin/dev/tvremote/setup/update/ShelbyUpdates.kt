@@ -3,6 +3,12 @@ package dev.tvremote.setup.update
 import android.app.Activity
 import android.app.ProgressDialog
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import android.content.pm.PackageInstaller
+import android.app.PendingIntent
+import dev.tvremote.setup.ShelbyInstallReceiver
+import java.io.IOException
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
@@ -11,19 +17,19 @@ import com.android.apksig.ApkVerifier
 import dev.tvremote.core.T
 import dev.tvremote.setup.R
 import dev.tvremote.tvui.TvUi
-import dev.tvremote.update.SelfUpdate
-import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
 
-/** Manual fork updates only. No ADB install, silent install, permission change, data wipe or remote frontend execution. */
-internal class ShelbyUpdates(private val activity: Activity) {
+/** Manual fork updates only. No ADB install, silent install, data wipe or remote frontend execution. */
+internal class ShelbyUpdates(private val activity: Activity, private val onVersion: (String?) -> Unit) {
     private val ui = Handler(Looper.getMainLooper())
     @Volatile private var busy = false
     @Volatile private var cancelled = false
+    private var waiting: ShelbyUpdatePolicy.Candidate? = null
+    private var waitingLog: ((String) -> Unit)? = null
     private fun alive() = !activity.isFinishing && !activity.isDestroyed
     private fun say(log: (String) -> Unit, text: String) { ui.post { if (alive()) log(text) } }
     private fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }
@@ -50,22 +56,18 @@ internal class ShelbyUpdates(private val activity: Activity) {
         Thread({
             try {
                 val pin = trustedPin()
-                val latest = JSONObject(text("https://api.github.com/repos/${ShelbyUpdatePolicy.REPO}/releases/latest", 65536))
-                require(!latest.getBoolean("draft") && !latest.getBoolean("prerelease")) { "Unpublished update" }
-                val tag = latest.getString("tag_name")
-                require(tag.matches(Regex("shelby-tv-v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+")))
-                val metadata = "https://github.com/${ShelbyUpdatePolicy.REPO}/releases/download/$tag/shelby-update.json"
-                val candidate = ShelbyUpdatePolicy.parse(text(metadata, 32768), tag, ownCode(), pin)
+                val candidate = ShelbyUpdateTransfer.latest(ownCode(), pin, ::text)
                 ui.post {
                     busy = false
                     if (alive()) {
+                        onVersion(candidate?.version ?: "")
                         if (candidate == null) log(T("tv_main.newest_version", "v" to activity.packageManager.getPackageInfo(activity.packageName, 0).versionName.orEmpty()))
                         else TvUi.confirm(activity, R.style.TvSheet, T("tv_main.update_to", "v" to candidate.version),
-                            T("shelby_update.ask"), T("page.update"), T("common.cancel")) { download(candidate, log) }
+                            T("shelby_update.versions", "current" to activity.packageManager.getPackageInfo(activity.packageName, 0).versionName.orEmpty(), "available" to candidate.version) + "\n" + candidate.date.take(10) + "\n\n" + candidate.notes + "\n\n" + T("shelby_update.ask"), T("page.update"), T("common.cancel")) { download(candidate, log) }
                     }
                 }
             } catch (e: Exception) {
-                busy = false; say(log, T("shelby_update.rejected"))
+                busy = false; say(log, T(ShelbyUpdateTransfer.errorKey(e)))
             }
         }, "shelby-update-check").apply { isDaemon = true }.start()
     }
@@ -73,9 +75,14 @@ internal class ShelbyUpdates(private val activity: Activity) {
     @Suppress("DEPRECATION")
     private fun download(candidate: ShelbyUpdatePolicy.Candidate, log: (String) -> Unit) {
         if (busy || !alive()) return
-        // Do not open or change Android security settings. The usual external installer remains an alternative.
         if (Build.VERSION.SDK_INT >= 26 && !activity.packageManager.canRequestPackageInstalls()) {
-            say(log, T("shelby_update.installer_blocked")); return
+            // Only after the user chooses Update; Android owns this permission decision.
+            waiting = candidate; waitingLog = log
+            try {
+                activity.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + activity.packageName)))
+                say(log, T("shelby_update.permission"))
+            } catch (e: Exception) { waiting = null; waitingLog = null; say(log, T("shelby_update.installer_blocked")) }
+            return
         }
         busy = true; cancelled = false
         val dialog = ProgressDialog(activity).apply {
@@ -86,25 +93,13 @@ internal class ShelbyUpdates(private val activity: Activity) {
             val apk = File(activity.cacheDir, "shelby-verified-update.apk")
             try {
                 val connection = open(candidate.url)
-                val digest = MessageDigest.getInstance("SHA-256")
                 try {
-                    require(connection.responseCode == 200)
-                    var count = 0L
+                    if (connection.responseCode != 200) throw IOException("Download unavailable")
                     connection.inputStream.use { input -> apk.outputStream().use { output ->
-                        val buffer = ByteArray(65536)
-                        while (true) {
-                            check(!cancelled && alive())
-                            val n = input.read(buffer); if (n < 0) break
-                            count += n; require(count <= candidate.bytes && count <= ShelbyUpdatePolicy.MAX_APK)
-                            output.write(buffer, 0, n); digest.update(buffer, 0, n)
-                            val percent = (count * 100 / candidate.bytes).toInt()
-                            ui.post { if (alive()) dialog.progress = percent }
-                        }
+                        ShelbyUpdateTransfer.copy(input, output, candidate, activity.cacheDir.usableSpace,
+                            { !cancelled && alive() }, { percent -> ui.post { if (alive()) dialog.progress = percent } })
                     } }
-                    require(count == candidate.bytes)
                 } finally { connection.disconnect() }
-                val actual = digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
-                require(actual == candidate.sha256)
                 require(trustedPin() == candidate.signer)
                 val verified = ApkVerifier.Builder(apk).setMinCheckedPlatformVersion(21).build().verify()
                 require(verified.isVerified)
@@ -113,11 +108,10 @@ internal class ShelbyUpdates(private val activity: Activity) {
                 ShelbyUpdatePolicy.archive(candidate, info.packageName, code, info.versionName, verified.signerCertificates.map { sha(it.encoded) })
                 require(code > ownCode() && !cancelled && alive())
                 // No uninstall: Android's compatible full-install session keeps the existing app data and asks the user.
-                SelfUpdate.Installed.failed = { say(log, T("shelby_update.rejected")) }
-                SelfUpdate.commit(activity, apk, Intent(activity, SelfUpdate.Installed::class.java), false, false)
+                install(apk)
                 say(log, T("tv_main.installer_asks"))
             } catch (e: Exception) {
-                if (!cancelled) say(log, T("shelby_update.rejected"))
+                if (!cancelled) say(log, T(if (e is IOException && activity.cacheDir.usableSpace < candidate.bytes) "shelby_update.no_space" else ShelbyUpdateTransfer.errorKey(e)))
             } finally {
                 apk.delete(); busy = false
                 ui.post { if (alive()) dialog.dismiss() }
@@ -125,10 +119,51 @@ internal class ShelbyUpdates(private val activity: Activity) {
         }, "shelby-update-download").apply { isDaemon = true }.start()
     }
 
+    fun pause() { ShelbyInstallReceiver.notifyResult = null }
+
+    fun resume(log: (String) -> Unit) {
+        ShelbyInstallReceiver.notifyResult = { key ->
+            activity.getSharedPreferences("shelby_update", Activity.MODE_PRIVATE).edit().remove("result").apply()
+            say(log, T(key))
+        }
+        activity.getSharedPreferences("shelby_update", Activity.MODE_PRIVATE).getString("result", null)?.let { key ->
+            activity.getSharedPreferences("shelby_update", Activity.MODE_PRIVATE).edit().remove("result").apply()
+            log(T(key))
+        }
+        val candidate = waiting ?: return
+        val callback = waitingLog ?: log
+        waiting = null; waitingLog = null
+        if (Build.VERSION.SDK_INT < 26 || activity.packageManager.canRequestPackageInstalls()) {
+            // Permission is not consent to a different or newly discovered version.
+            TvUi.confirm(activity, R.style.TvSheet, T("tv_main.update_to", "v" to candidate.version),
+                T("shelby_update.ask"), T("page.update"), T("common.cancel")) { download(candidate, callback) }
+        } else log(T("shelby_update.installer_blocked"))
+    }
+
+    private fun install(apk: File) {
+        val pi = activity.packageManager.packageInstaller
+        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+        params.setAppPackageName(ShelbyUpdatePolicy.PACKAGE)
+        if (Build.VERSION.SDK_INT >= 31) params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_REQUIRED)
+        val id = pi.createSession(params)
+        try {
+            pi.openSession(id).use { session ->
+                session.openWrite("apk", 0, apk.length()).use { output -> apk.inputStream().use { it.copyTo(output) }; session.fsync(output) }
+                val flags = PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0)
+                val back = Intent(activity, ShelbyInstallReceiver::class.java)
+                session.commit(PendingIntent.getBroadcast(activity, id, back, flags).intentSender)
+            }
+        } catch (e: Exception) {
+            pi.abandonSession(id)
+            throw e
+        }
+    }
+
     private fun text(url: String, limit: Int): String {
         val connection = open(url)
         try {
-            require(connection.responseCode == 200)
+            if (connection.responseCode == 404) throw ShelbyUpdateTransfer.MissingMetadata()
+            if (connection.responseCode != 200) throw IOException("Release unavailable")
             return connection.inputStream.use { input ->
                 val out = ByteArrayOutputStream()
                 val bytes = ByteArray(4096)
@@ -148,7 +183,8 @@ internal class ShelbyUpdates(private val activity: Activity) {
             val connection = URL(next).openConnection() as HttpURLConnection
             connection.instanceFollowRedirects = false; connection.connectTimeout = 10000; connection.readTimeout = 15000
             connection.setRequestProperty("User-Agent", "Shelby-Remote-Update")
-            if (connection.responseCode !in setOf(301, 302, 303, 307, 308)) return connection
+            val status = try { connection.responseCode } catch (e: Exception) { connection.disconnect(); throw e }
+            if (status !in setOf(301, 302, 303, 307, 308)) return connection
             val location = connection.getHeaderField("Location")
             val target = try { URL(URL(next), location ?: error("Missing redirect")).toString() } finally { connection.disconnect() }
             next = target
