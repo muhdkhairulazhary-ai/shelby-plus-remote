@@ -57,6 +57,8 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
           script: |
+            adb shell wm size 1280x720
+            adb shell wm density 160
             adb install app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk
             adb shell am start -n dev.tvremote.setup/.MainActivity
             adb forward tcp:8765 tcp:8765
