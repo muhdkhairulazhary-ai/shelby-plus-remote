@@ -31,6 +31,10 @@ def main():
         if any(n.get('text')=='Check for updates' for n in ui.iter('node')):
             break
         tile=next(n for n in ui.iter('node') if n.get('content-desc')==f'Shelby+ Remote {version}' and n.get('clickable')=='true')
+        if version == '0.53.3':
+            label=next(n for n in ui.iter('node') if n.get('text')=='OTA Test v0.53.3')
+            x1,y1,x2,y2=map(int,re.findall(r'\d+',label.get('bounds')))
+            assert x2>x1 and y2>y1, 'OTA test label is not visible'
         if tile.get('focused')=='true':
             adb('shell','input','keyevent','23')
             continue
