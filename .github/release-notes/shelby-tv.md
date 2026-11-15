@@ -2,19 +2,17 @@ Shelby+ Remote — Your TV. Your Control.
 
 This production APK uses the permanent Shelby signing key. The TV app and its bundled keys add-on share the same certificate. Read SIGNING-CERTIFICATE.txt and UPDATE-COMPATIBILITY.txt before installation.
 
-Changes in 0.53.2:
-- Manual Check for updates with current/available versions, release date and release notes.
-- Bounded HTTPS downloads, SHA-256, APK signature/certificate, package and increasing-version checks before Android installation.
-- Download progress and clear offline, storage, verification, cancellation and installer errors.
-- Android installer permission is requested only after choosing Update. Android still asks before installing; no silent installation.
-- Production releases require an explicit manual workflow run and reviewed version. Validation artifacts are excluded from update metadata.
+Changes in 0.53.3:
+- Minimal OTA test based on production 0.53.2: visible “OTA Test v0.53.3” label on the TV app screen.
+- versionName 0.53.3, versionCode 105303. Application IDs, permanent signing identity, pairing/settings formats and OTA implementation are unchanged.
+- After updating, reopen the TV app and confirm the label. Remote, keyboard and Safari behavior should remain unchanged.
 
 Install the attached shelby-plus-remote-tv.apk using Android TV Downloader. The stable URL follows the latest published release:
 https://github.com/muhdkhairulazhary-ai/shelby-plus-remote/releases/latest/download/shelby-plus-remote-tv.apk
 
 Use the TV's physical remote for installation, then open the TV-displayed address on port 8765 in iPhone Safari on the same trusted Wi-Fi. Existing pairing, keyboard, remote actions and Safari layout remain intact.
 
-Same package and permanent certificate with a higher versionCode supports an in-place update that keeps local pairing/settings. Do not uninstall or clear data for a compatible update. Builds signed with a discarded temporary key require a one-time fresh installation of the app and matching add-on, losing local pairing/settings. Keep your current installation until ready to accept that loss.
+This OTA test is an in-place update from the published production 0.53.2 signed with the same permanent certificate. Keep the app and its matching add-on installed. Do not uninstall or clear app data; pairing, authentication and settings remain in their existing storage. If Android rejects the update, stop and retain the current installation while the certificate/package/version issue is investigated. Do not work around rejection by uninstalling.
 
 If download or installation fails, keep the current app, check Wi-Fi/storage and retry Check for updates or use the verified tagged release APK through Downloader. Android cannot install a lower versionCode as a recovery update; publish a corrected higher version using the same permanent key. See INSTALL.md and SIGNING.md.
 

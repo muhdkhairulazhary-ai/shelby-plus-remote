@@ -4724,5 +4724,6 @@
  "shelby_update.no_space": "TV không đủ chỗ trống. Dọn bớt rồi thử lại.",
  "shelby_update.cancelled": "Đã hủy cập nhật. App đang dùng vẫn như cũ.",
  "shelby_update.install_failed": "Android không cài được bản cập nhật. Giữ app hiện tại rồi thử lại bằng bản phát hành đã kiểm tra.",
- "shelby_update.permission": "Cho phép Shelby+ Remote yêu cầu cài app trong Android, rồi quay lại đây để xác nhận cập nhật."
+ "shelby_update.permission": "Cho phép Shelby+ Remote yêu cầu cài app trong Android, rồi quay lại đây để xác nhận cập nhật.",
+ "shelby_update.ota_test_label": "OTA Test v{v}"
 }

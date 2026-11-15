@@ -6,6 +6,8 @@ Three version numbers, each bumped only when its own part changes: `VERSION` (th
 
 ## Unreleased
 
+- Shelby+ TV 0.53.3: minimal OTA test label and version bump to code 105303; production signing, package identity, pairing storage and updater remain unchanged.
+
 - Shelby+ production: manual reviewed-version releases with permanent certificate checks, production-only metadata, release notes and user-confirmed Android updates with network/storage/installer recovery.
 
 - Shelby+ TV: constrain long YouTube/SmartTube metadata and media controls on iPhone Safari; add WebKit overflow regression coverage.
