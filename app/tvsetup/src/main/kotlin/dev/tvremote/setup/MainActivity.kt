@@ -135,6 +135,7 @@ class MainActivity : Activity() {
         fun paint() {
             version = try { packageManager.getPackageInfo(app.pkg, 0).versionName ?: "0" } catch (e: Exception) { "" }
             on = version.isNotEmpty()
+            if (app === SELF) contentDescription = "Shelby+ Remote $version"
             val up = newer != null
             pill.text = if (up) T("eco.new") else if (on) T("eco.on", "v" to version) else T("eco.off")   // its number: which TV app is behind, at a glance
             pill.background = box(if (up) PILL_NEW else if (on) PILL_ON else PILL, 10, 0)

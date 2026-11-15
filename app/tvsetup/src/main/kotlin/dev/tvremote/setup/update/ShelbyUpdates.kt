@@ -13,7 +13,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import com.android.apksig.ApkVerifier
 import dev.tvremote.core.T
 import dev.tvremote.setup.R
 import dev.tvremote.tvui.TvUi
@@ -101,11 +100,10 @@ internal class ShelbyUpdates(private val activity: Activity, private val onVersi
                     } }
                 } finally { connection.disconnect() }
                 require(trustedPin() == candidate.signer)
-                val verified = ApkVerifier.Builder(apk).setMinCheckedPlatformVersion(21).build().verify()
-                require(verified.isVerified)
+                val signers = ShelbyApkIdentity.signers(apk, candidate.signer)
                 val info = activity.packageManager.getPackageArchiveInfo(apk.path, 0) ?: error("Invalid APK")
                 val code = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
-                ShelbyUpdatePolicy.archive(candidate, info.packageName, code, info.versionName, verified.signerCertificates.map { sha(it.encoded) })
+                ShelbyUpdatePolicy.archive(candidate, info.packageName, code, info.versionName, signers)
                 require(code > ownCode() && !cancelled && alive())
                 // No uninstall: Android's compatible full-install session keeps the existing app data and asks the user.
                 install(apk)

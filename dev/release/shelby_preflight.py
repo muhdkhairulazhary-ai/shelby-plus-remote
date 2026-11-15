@@ -19,7 +19,7 @@ def validate(version, committed, releases, refs):
     if version != committed.strip():
         raise ValueError('Version input must match reviewed app/tvsetup/VERSION')
     tag = f'shelby-tv-v{version}-1'
-    if any(r['ref'] == 'refs/tags/'+tag for r in refs) or any(r['tag_name'] == tag for r in releases):
+    if any(re.fullmatch(r'refs/tags/shelby-tv-v'+re.escape(version)+r'-[0-9]+',r['ref']) for r in refs) or any(r['tag_name'] == tag for r in releases):
         raise ValueError('Release tag already exists; it must never be overwritten')
     for release in releases:
         match = re.fullmatch(r'shelby-tv-v(.+)-[0-9]+', release['tag_name'])

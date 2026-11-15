@@ -68,6 +68,7 @@ class SigningPolicyTest(unittest.TestCase):
         for version in ['0.53.0','0.53.1']:
             with self.assertRaises(ValueError): preflight.validate(version,version,[previous],[])
         with self.assertRaises(ValueError): preflight.validate('0.53.2','0.53.2',[],[dict(ref='refs/tags/shelby-tv-v0.53.2-1')])
+        with self.assertRaises(ValueError): preflight.validate('0.53.2','0.53.2',[],[dict(ref='refs/tags/shelby-tv-v0.53.2-2')])
         with self.assertRaises(ValueError): preflight.validate('0.53.2','0.53.1',[],[])
         with self.assertRaises(ValueError): preflight.version_code('0.053.2')
 
