@@ -23,7 +23,7 @@ internal class OtaUpgradeProbe(private val runner: Instrumentation, private val 
         check(info.versionCode==105304 && info.packageName=="dev.tvremote.setup")
         val pin=sha(info.signatures!!.single().toByteArray())
         val apk=File(context.cacheDir,"ota-test-0535.apk")
-        context.assets.open("candidate.apk").use { input -> apk.outputStream().use { input.copyTo(it) } }
+        runner.context.assets.open("candidate.apk").use { input -> apk.outputStream().use { input.copyTo(it) } }
         val hash=apk.inputStream().use { stream ->
             val digest=MessageDigest.getInstance("SHA-256"); val buffer=ByteArray(65536)
             while(true) { val n=stream.read(buffer); if(n<0) break; digest.update(buffer,0,n) }
