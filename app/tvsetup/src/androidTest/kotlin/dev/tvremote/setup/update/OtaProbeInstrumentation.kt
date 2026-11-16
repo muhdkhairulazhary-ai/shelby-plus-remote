@@ -29,6 +29,14 @@ class OtaProbeInstrumentation : Instrumentation() {
             @Suppress("DEPRECATION") val code = if (Build.VERSION.SDK_INT>=28) info.longVersionCode else info.versionCode.toLong()
             ShelbyUpdatePolicy.archive(candidate,info.packageName,code,info.versionName,signers)
             trace.append("package/version PASS; installer not invoked for ARM production fixture on x86 test TV\n")
+            check(runCatching { ShelbyApkIdentity.signers(apk,"0".repeat(64)) }.isFailure)
+            java.io.RandomAccessFile(apk,"rw").use { file ->
+                val offset = file.length()/2
+                file.seek(offset); val original = file.readByte()
+                file.seek(offset); file.writeByte(original.toInt() xor 1)
+            }
+            check(runCatching { ShelbyApkIdentity.signers(apk,candidate.signer) }.isFailure)
+            trace.append("wrong certificate and tampered APK rejected PASS\n")
             result.putString("ota_status","PASS")
             apk.delete()
         } catch (error: Throwable) {

@@ -10,6 +10,7 @@ gradle.beforeProject { p ->
                 debug.minifyEnabled = true
                 debug.proguardFiles(android.getDefaultProguardFile('proguard-android-optimize.txt'),
                     new File(p.projectDir, '../shared/proguard-rules.pro'),
+                    new File(p.projectDir, 'proguard-rules.pro'),
                     new File(p.rootProject.projectDir, '../../dev/test/shelby-ota-probe.pro'))
             }
         }

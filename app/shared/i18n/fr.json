@@ -4896,5 +4896,6 @@
  "shelby_update.cancelled": "Mise à jour annulée. L’app installée reste inchangée.",
  "shelby_update.install_failed": "Android n’a pas pu installer la mise à jour. Gardez l’app actuelle et réessayez avec une version vérifiée.",
  "shelby_update.permission": "Autorisez Shelby+ Remote à demander une installation dans Android, puis revenez confirmer la mise à jour.",
- "shelby_update.ota_test_label": "OTA Test v{v}"
+ "shelby_update.ota_test_label": "OTA Test v{v}",
+ "shelby_update.diagnostic": "Détails de la mise à jour : {detail}"
 }

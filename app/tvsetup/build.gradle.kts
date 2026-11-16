@@ -34,7 +34,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true                                    // drops the unused part of the Kotlin library; names are kept (see proguard-rules.pro)
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "../shared/proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "../shared/proguard-rules.pro", "proguard-rules.pro")
         }
     }
     androidResources {
