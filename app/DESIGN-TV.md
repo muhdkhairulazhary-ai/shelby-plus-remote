@@ -339,5 +339,8 @@ is used everywhere. Shaders are rebuilt only on bounds changes. Text and QR code
 are rendered normally above the surfaces. Focus uses a short, restrained elevation
 transition; reduced motion and low-memory devices use immediate state changes.
 Existing colorful ecosystem banners remain distinct and keep their shared TvTile ring.
+TvTile accepts an optional corner radius for the dashboard’s 18 dp glass tiles;
+other callers retain the shared 10 dp default. Silver edges fade along their curves,
+and atmospheric gradients are statically stretched into diffused light reflections.
 Dashboard attribution belongs in the remotely accessible About / Licenses sheet,
 which retains the complete bundled MIT notice and functional upstream links.

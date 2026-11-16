@@ -118,7 +118,7 @@ class MainActivity : Activity() {
      * pill saying whether it is on this TV. OK opens it, or offers to install it, with no ADB too (the user, 2026-10-25: TV Home first).
      */
     private inner class Eco(val app: dev.tvremote.core.ontv.Bundle.App, banner: Int) :
-        dev.tvremote.tvui.TvTile(this@MainActivity, dp(ECO_W), { n -> (n.toFloat() * resources.displayMetrics.density).roundToInt() }) {
+        dev.tvremote.tvui.TvTile(this@MainActivity, dp(ECO_W), { n -> (n.toFloat() * resources.displayMetrics.density).roundToInt() }, radius = 18f) {
         init { name.visibility = View.GONE }                          // what it does goes in the words beside it
         override val grows get() = false                             // focus = the ring only, no growth (the user, 2026-11-03: cut at top and bottom)
         val key = app.pkg.substringAfterLast('.')                    // home, channels, games, apps
@@ -132,7 +132,7 @@ class MainActivity : Activity() {
         init {
             faceColor(TvUi.CARD)                                      // the face's rounded outline, which clips the banner
             fill(ImageView(context).apply { setImageResource(banner); scaleType = ImageView.ScaleType.CENTER_CROP })
-            face.addView(View(context).apply { background = LiquidGlass.reflection(context); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
+            face.addView(View(context).apply { background = LiquidGlass.reflection(context, 18f); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
                 android.widget.FrameLayout.LayoutParams(-1, -1))
             pill.textSize = 10f; pill.setTextColor(Color.WHITE); pill.setPadding(dp(7), dp(2), dp(7), dp(2))
             face.addView(pill, android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END).apply { setMargins(dp(5), dp(5), dp(5), dp(5)) })
