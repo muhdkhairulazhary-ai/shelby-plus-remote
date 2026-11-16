@@ -72,9 +72,11 @@ jobs:
         with:
           api-level: 30
           target: android-tv
+          # Android 11 clamps forced sizes to 2x the boot display. Boot at 1080p so 3840x2160 is testable.
+          profile: tv_1080p
           arch: x86
           disable-animations: true
-          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -skin 1280x720
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -skin 1920x1080
           script: |
             adb shell wm size 1280x720
             adb shell wm density 160

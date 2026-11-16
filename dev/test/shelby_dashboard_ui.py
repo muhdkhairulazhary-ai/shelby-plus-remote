@@ -32,6 +32,7 @@ def main():
         for label, width, height, density in [('720p',1280,720,160), ('1080p',1920,1080,240), ('4k',3840,2160,480), ('compact-1080p',1920,1080,320)]:
             adb('shell', 'wm', 'size', f'{width}x{height}')
             adb('shell', 'wm', 'density', str(density))
+            (output/f'{label}-display.txt').write_bytes(adb('shell','wm','size') + adb('shell','wm','density'))
             # Measure a fresh launch at each settled display configuration, not an intermediate wm resize.
             # -S stops only the disposable emulator process; it retains app data, pairing and settings.
             adb('shell', 'am', 'start', '-S', '-W', '-n', 'dev.tvremote.setup/.MainActivity')
@@ -44,6 +45,7 @@ def main():
             (output/f'{label}.xml').write_bytes(ET.tostring(ui))
             path = output/f'{label}.png'
             path.write_bytes(adb('exec-out','screencap','-p'))
+            assert Image.open(path).size == (width,height), (label,'Emulator did not render requested resolution',Image.open(path).size,(width,height))
             nodes = list(ui.iter('node'))
             for text in ['Shelby+ Remote', 'Your TV. Your Control.', 'Developed by plus+', 'Control from a phone', 'About / Licenses', 'Check for updates']:
                 node = next((n for n in nodes if n.get('text') == text), None)
