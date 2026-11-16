@@ -56,6 +56,13 @@ def main():
                 ui = tree()
                 if any('.settings' in n.get('package','') for n in ui.iter('node')):
                     adb('shell','input','keyevent','4'); continue
+                if label == '4k':
+                    # Preserve the existing non-TV consent flow on the large-screen Android fixture.
+                    # Select Stay with real D-pad input; do not spoof leanback or override a preference.
+                    stay = next((n for n in ui.iter('node') if n.get('text') == 'Use it here anyway'), None)
+                    if stay is not None:
+                        adb('shell','input','keyevent','23' if stay.get('focused') == 'true' else '20')
+                        continue
                 if any(n.get('text') == 'Developed by plus+' for n in ui.iter('node')): break
                 time.sleep(.3)
             (output/f'{label}.xml').write_bytes(ET.tostring(ui))
