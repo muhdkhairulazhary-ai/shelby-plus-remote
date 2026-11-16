@@ -275,6 +275,7 @@ class MainActivity : Activity() {
         names.addView(text(T("shelby_dashboard.developed_by"), 13, TvUi.TEXT, true))
         names.addView(text("v" + version() + released().let { if (it.isEmpty()) "" else " · $it" }, 12, MUTED, false).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })   // the version in use here; the Update tile says whether a newer one exists
         head.addView(names, LinearLayout.LayoutParams(0, -2, 1f))
+        head.addView(smallButton(T("shelby_dashboard.about_licenses")) { aboutLicenses() }, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(8) })
         left.addView(head)
 
         val status = LinearLayout(this)
@@ -320,13 +321,13 @@ class MainActivity : Activity() {
             startActivity(android.content.Intent(this, PinActivity::class.java).putExtra("kids_off", true))
         }
         kidsOffTile.view.visibility = View.GONE
-        left.addView(kidsOffTile.view, LinearLayout.LayoutParams(-1, dp(if (phone) 76 else 60)).apply { topMargin = dp(if (phone) 8 else 12) })
+        left.addView(kidsOffTile.view, LinearLayout.LayoutParams(-1, dp(if (phone) 76 else 72)).apply { topMargin = dp(if (phone) 8 else 12) })
         val grid = listOf(manage) + if (phone) tiles else tiles.filter { it !== updateTile }   // Manage first, in the grid: no ragged last row
         val cols = if (phone) 2 else 3                                 // TV: one row of three; phone: 2 x 2
         for (row in grid.chunked(cols)) {
             val r = LinearLayout(this)
             r.clipChildren = false
-            row.forEachIndexed { i, tile -> r.addView(tile.view, LinearLayout.LayoutParams(0, dp(if (phone) 76 else 60), 1f).apply { if (i > 0) leftMargin = dp(10) }) }
+            row.forEachIndexed { i, tile -> r.addView(tile.view, LinearLayout.LayoutParams(0, dp(if (phone) 76 else 72), 1f).apply { if (i > 0) leftMargin = dp(10) }) }
             left.addView(r, margins(top = if (phone) 8 else 12))
         }
 
@@ -422,7 +423,9 @@ class MainActivity : Activity() {
         } else {
             left.addView(logBox, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(8) })   // under a focused banner's rise
             page.addView(left, LinearLayout.LayoutParams(0, -1, 1f))
-            page.addView(webCol, LinearLayout.LayoutParams(dp(260), -1).apply { leftMargin = dp(20) })
+            val rightWidth = ((resources.displayMetrics.widthPixels - page.paddingLeft - page.paddingRight - dp(20)) * .30f)
+                .roundToInt().coerceIn(dp(240), dp(340))
+            page.addView(webCol, LinearLayout.LayoutParams(rightWidth, -1).apply { leftMargin = dp(20) })
             setContentView(page)
         }
 
@@ -611,7 +614,7 @@ class MainActivity : Activity() {
             val scheme = if (secure) "https://" else "http://"
             val port = if (secure) RemoteService.HTTPS_PORT else RemoteService.PORT
             val link = scheme + ip + ":" + port
-            qr(link)?.let { webCol.addView(it, LinearLayout.LayoutParams(dp(156), dp(156)).apply { topMargin = dp(10); gravity = Gravity.CENTER_HORIZONTAL }) }
+            qr(link)?.let { webCol.addView(it, LinearLayout.LayoutParams(dp(if (resources.configuration.screenHeightDp < 600) 144 else 184), dp(if (resources.configuration.screenHeightDp < 600) 144 else 184)).apply { topMargin = dp(10); gravity = Gravity.CENTER_HORIZONTAL }) }
             val addr = text(link.removePrefix(scheme), 15, TvUi.TEXT, true)
             addr.gravity = Gravity.CENTER
             webCol.addView(addr, margins(top = 8))
@@ -636,7 +639,6 @@ class MainActivity : Activity() {
         // behind a button: two QR codes on one screen, and "scan the QR" (pairing, the web remote) was read off the wrong one
         webCol.addView(smallButton(T("tv_main.tv_remote_android_app")) { appQr() }, margins(top = 6))
         if (focused != null && focused.parent == null) webBtn.requestFocus()   // the focused button was rebuilt: keep the focus on this card
-        webCol.addView(smallButton(T("shelby_dashboard.about_licenses")) { aboutLicenses() }, margins(top = 6))
     }
 
     /** Complete upstream notice remains visible, with its original authorship and links. */
@@ -647,7 +649,8 @@ class MainActivity : Activity() {
         TvUi.sheetNote(content, assets.open("LICENSE").bufferedReader().use { it.readText() })
         TvUi.sheetNote(content, T("shelby_dashboard.third_party"))
         content.addView(smallButton("tvremote.pages.dev") {
-            startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://tvremote.pages.dev")))
+            try { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://tvremote.pages.dev"))) }
+            catch (e: android.content.ActivityNotFoundException) { log("https://tvremote.pages.dev · " + reason(e)) }
         }, margins(top = 8))
         content.addView(smallButton(T("common.close")) { dialog.dismiss() }, margins(top = 8))
         dialog.show()
