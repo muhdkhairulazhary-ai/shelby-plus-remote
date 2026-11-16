@@ -18,9 +18,9 @@ class OtaProbeInstrumentation : Instrumentation() {
             val json = context.assets.open("0.53.3/shelby-update.json").bufferedReader().use { it.readText() }
             val candidate = ShelbyUpdatePolicy.parse(json,"shelby-tv-v0.53.3-1",105302,old.getString("certificateSha256"))!!
             trace.append("metadata PASS ${candidate.version} code=${candidate.code}\n")
-            val apk = File(context.cacheDir,"production-0.53.3.apk")
+            val apk = File(targetContext.cacheDir,"production-0.53.3.apk")
             context.assets.open("0.53.3/shelby-plus-remote-tv.apk").use { input -> apk.outputStream().use { output ->
-                ShelbyUpdateTransfer.copy(input,output,candidate,context.cacheDir.usableSpace,{ true }) { }
+                ShelbyUpdateTransfer.copy(input,output,candidate,targetContext.cacheDir.usableSpace,{ true }) { }
             } }
             trace.append("checksum/length PASS\n")
             val signers = ShelbyApkIdentity.signers(apk,candidate.signer)
