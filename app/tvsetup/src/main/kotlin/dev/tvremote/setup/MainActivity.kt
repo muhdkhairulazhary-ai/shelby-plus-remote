@@ -266,7 +266,7 @@ class MainActivity : Activity() {
         names.setPadding(resources.getDimension(R.dimen.tv_head_gap).toInt(), 0, 0, 0)
         names.addView(text("Shelby+ Remote", if (phone) 20 else 24, TvUi.TEXT, true))
         names.addView(text("Your TV. Your Control.", 14, TvUi.TEXT, false))
-        if (version() == "0.53.3") names.addView(text(T("shelby_update.ota_test_label", "v" to version()), 14, TvUi.TEXT, true))
+        if (version() == "0.53.5") names.addView(text(T("shelby_update.ota_test_label", "v" to version()), 14, TvUi.TEXT, true))
         names.addView(text("v" + version() + released().let { if (it.isEmpty()) "" else " · $it" }
             + " · Hoang Tran · tvremote.pages.dev", 12, MUTED, false).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })   // the version in use here; the Update tile says whether a newer one exists
         head.addView(names, LinearLayout.LayoutParams(0, -2, 1f))

@@ -48,8 +48,14 @@ jobs:
           for version in 0.53.2 0.53.3; do
             gh release download "shelby-tv-v$version-1" --repo muhdkhairulazhary-ai/shelby-plus-remote --pattern shelby-update.json --pattern shelby-plus-remote-tv.apk --dir "app/tvsetup/build/generated/ota-probe/$version"
           done
-      - name: Build test-only x86 TV APK
-        run: app/gradle/gradlew -p app/gradle --no-daemon -I ../../dev/test/shelby-emulator.init.gradle :tvsetup:assembleDebug :tvsetup:assembleDebugAndroidTest
+      - name: Build minified test-only baseline and candidate with the same disposable debug certificate
+        run: |
+          VERSION_NAME=0.53.4 app/gradle/gradlew -p app/gradle --no-daemon -I ../../dev/test/shelby-emulator.init.gradle :tvsetup:assembleDebug
+          mkdir -p emulator-ota
+          cp app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk emulator-ota/baseline.apk
+          app/gradle/gradlew -p app/gradle --no-daemon -I ../../dev/test/shelby-emulator.init.gradle :tvsetup:assembleDebug
+          cp app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk app/tvsetup/build/generated/ota-probe/candidate.apk
+          app/gradle/gradlew -p app/gradle --no-daemon -I ../../dev/test/shelby-emulator.init.gradle :tvsetup:assembleDebugAndroidTest
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -66,12 +72,17 @@ jobs:
           script: |
             adb shell wm size 1280x720
             adb shell wm density 160
-            adb install app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk
+            adb install emulator-ota/baseline.apk
             adb install app/tvsetup/build/outputs/apk/androidTest/debug/tvsetup-debug-androidTest.apk
-            timeout 90s adb shell am instrument -w dev.tvremote.setup.test/dev.tvremote.setup.update.OtaProbeInstrumentation > /tmp/shelby-ota-probe.txt 2>&1 || true
+            adb shell appops set dev.tvremote.setup REQUEST_INSTALL_PACKAGES allow
+            timeout 90s adb shell am instrument -w -e phase handoff dev.tvremote.setup.test/dev.tvremote.setup.update.OtaProbeInstrumentation > /tmp/shelby-ota-probe.txt 2>&1 || true
             timeout 10s adb logcat -d > /tmp/shelby-ota-logcat.txt 2>/dev/null || true
             cat /tmp/shelby-ota-probe.txt
             python3 -c "from pathlib import Path; assert 'ota_status=PASS' in Path('/tmp/shelby-ota-probe.txt').read_text()"
+            python3 dev/test/shelby_ota_install_ui.py /tmp/shelby-ota-install-ui > /tmp/shelby-ota-install-ui.txt 2>&1
+            timeout 45s adb shell am instrument -w -e phase persistence dev.tvremote.setup.test/dev.tvremote.setup.update.OtaProbeInstrumentation > /tmp/shelby-ota-persistence.txt 2>&1 || true
+            cat /tmp/shelby-ota-persistence.txt
+            python3 -c "from pathlib import Path; assert 'ota_status=PASS' in Path('/tmp/shelby-ota-persistence.txt').read_text()"
             adb shell am start -n dev.tvremote.setup/.MainActivity
             adb forward tcp:8765 tcp:8765
             python3 dev/test/shelby_pwa_server.py > /tmp/shelby-pwa-server.txt 2>&1
@@ -86,6 +97,12 @@ jobs:
           cp /tmp/shelby-update-ui.txt evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui/*.png evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui/*.xml evidence/ 2>/dev/null || true
+          cp /tmp/shelby-ota-install-ui.txt evidence/ 2>/dev/null || true
+          cp /tmp/shelby-ota-persistence.txt evidence/ 2>/dev/null || true
+          cp /tmp/shelby-ota-install-ui/*.png evidence/ 2>/dev/null || true
+          cp /tmp/shelby-ota-install-ui/*.xml evidence/ 2>/dev/null || true
+          cat evidence/shelby-ota-install-ui.txt 2>/dev/null || true
+          cat evidence/shelby-ota-persistence.txt 2>/dev/null || true
           cp /tmp/shelby-ota-logcat.txt evidence/ota-logcat.txt 2>/dev/null || true
           cp /tmp/shelby-ota-probe.txt evidence/ 2>/dev/null || true
           cat evidence/shelby-ota-probe.txt 2>/dev/null || true
