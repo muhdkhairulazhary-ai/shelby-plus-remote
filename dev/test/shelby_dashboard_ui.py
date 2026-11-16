@@ -119,4 +119,14 @@ def main():
         adb('shell','am','start','-n','dev.tvremote.setup/.MainActivity')
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception:
+        output = Path(sys.argv[1]); output.mkdir(parents=True, exist_ok=True)
+        try:
+            (output/'logcat.txt').write_bytes(adb('logcat','-d'))
+            (output/'failure.png').write_bytes(adb('exec-out','screencap','-p'))
+        except Exception:
+            pass  # Preserve the original assertion and any evidence already captured.
+        raise

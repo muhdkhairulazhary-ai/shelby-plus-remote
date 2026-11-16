@@ -173,10 +173,7 @@ jobs:
           emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -skin 1920x1080
           script: |
             adb install emulator-apk/candidate.apk
-            if ! python3 dev/test/shelby_dashboard_ui.py /tmp/shelby-dashboard-4k --only-4k; then
-              adb logcat -d > /tmp/shelby-dashboard-4k/logcat.txt
-              exit 1
-            fi
+            python3 dev/test/shelby_dashboard_ui.py /tmp/shelby-dashboard-4k --only-4k
       - uses: actions/upload-artifact@v4
         if: always()
         with:
