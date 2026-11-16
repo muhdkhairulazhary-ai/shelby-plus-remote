@@ -32,23 +32,26 @@ def main():
         for label, width, height, density in [('720p',1280,720,160), ('1080p',1920,1080,240), ('4k',3840,2160,480), ('compact-1080p',1920,1080,320)]:
             adb('shell', 'wm', 'size', f'{width}x{height}')
             adb('shell', 'wm', 'density', str(density))
-            adb('shell', 'am', 'start', '-n', 'dev.tvremote.setup/.MainActivity')
+            # Measure a fresh launch at each settled display configuration, not an intermediate wm resize.
+            # -S stops only the disposable emulator process; it retains app data, pairing and settings.
+            adb('shell', 'am', 'start', '-S', '-W', '-n', 'dev.tvremote.setup/.MainActivity')
             for _ in range(15):
                 ui = tree()
                 if any('.settings' in n.get('package','') for n in ui.iter('node')):
                     adb('shell','input','keyevent','4'); continue
                 if any(n.get('text') == 'Developed by plus+' for n in ui.iter('node')): break
                 time.sleep(.3)
+            (output/f'{label}.xml').write_bytes(ET.tostring(ui))
+            path = output/f'{label}.png'
+            path.write_bytes(adb('exec-out','screencap','-p'))
             nodes = list(ui.iter('node'))
             for text in ['Shelby+ Remote', 'Your TV. Your Control.', 'Developed by plus+', 'Control from a phone', 'About / Licenses', 'Check for updates']:
-                node = next(n for n in nodes if n.get('text') == text)
+                node = next((n for n in nodes if n.get('text') == text), None)
+                assert node is not None, (label, 'Required control/branding missing', text, [n.get('text') for n in nodes if n.get('text')])
                 x1,y1,x2,y2 = bounds(node)
                 assert 0 <= x1 < x2 <= width and 0 <= y1 < y2 <= height, (label,text,bounds(node))
             assert any(n.get('content-desc') == f'Shelby+ Remote {version}' for n in nodes)
             assert not any('Hoang Tran' in n.get('text','') for n in nodes), 'Dashboard branding still exposes old developer'
-            (output/f'{label}.xml').write_bytes(ET.tostring(ui))
-            path = output/f'{label}.png'
-            path.write_bytes(adb('exec-out','screencap','-p'))
             decoded = zxingcpp.read_barcodes(Image.open(path))
             assert len(decoded) == 1 and decoded[0].valid, (label,'QR is not scannable',decoded)
             data = decoded[0].text
