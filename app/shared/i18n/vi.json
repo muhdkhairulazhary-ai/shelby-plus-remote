@@ -4728,5 +4728,5 @@
  "shelby_update.diagnostic": "Chi tiết cập nhật: {detail}",
  "shelby_dashboard.developed_by": "Developed by plus+",
  "shelby_dashboard.about_licenses": "Giới thiệu / Giấy phép",
- "shelby_dashboard.third_party": "TV Remote gốc của Hoang Tran · MIT. Các thành phần bên thứ ba giữ giấy phép gốc; xem mã nguồn dự án gốc để biết thông báo thành phần."
+ "shelby_dashboard.third_party": "TV Remote gốc: Hoang Tran · MIT. Giấy phép bên thứ ba: xem mã nguồn gốc."
 }
