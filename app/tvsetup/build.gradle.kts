@@ -15,6 +15,7 @@ android {
         applicationId = "dev.tvremote.setup"
         minSdk = 21
         targetSdk = 34
+        testInstrumentationRunner = "dev.tvremote.setup.update.OtaProbeInstrumentation"
         versionName = appVersion
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }      // Conscrypt's native code (+2 MB): TVs are ARM; elsewhere pairing is just not offered
         resValue("string", "shelby_release_cert_sha256", System.getenv("SHELBY_RELEASE_CERT_SHA256") ?: "")
@@ -29,6 +30,7 @@ android {
     sourceSets["main"].java.srcDirs("../tvvoice/src/protocol/kotlin")       // VoiceProtocol: the same for TV Setup Voice
     // the add-on's APK (same variant, same key) rides inside this one as assets/tvkeys.apk: see packKeys below
     for (v in listOf("debug", "release")) sourceSets[v].assets.srcDirs(layout.buildDirectory.dir("generated/keys/$v"))
+    sourceSets["androidTest"].assets.srcDirs(layout.buildDirectory.dir("generated/ota-probe"))
     buildTypes {
         release {
             isMinifyEnabled = true                                    // drops the unused part of the Kotlin library; names are kept (see proguard-rules.pro)
