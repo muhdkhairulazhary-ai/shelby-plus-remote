@@ -24,7 +24,8 @@ def bounds(node):
 
 
 def main():
-    import cv2
+    import zxingcpp
+    from PIL import Image
     output = Path(sys.argv[1]); output.mkdir(parents=True, exist_ok=True)
     version = Path('app/tvsetup/VERSION').read_text().strip()
     try:
@@ -48,8 +49,10 @@ def main():
             (output/f'{label}.xml').write_bytes(ET.tostring(ui))
             path = output/f'{label}.png'
             path.write_bytes(adb('exec-out','screencap','-p'))
-            data, points, _ = cv2.QRCodeDetector().detectAndDecode(cv2.imread(str(path)))
-            assert points is not None and re.match(r'^https?://[^/]+:876[56]$',data), (label,'QR is not scannable',data)
+            decoded = zxingcpp.read_barcodes(Image.open(path))
+            assert len(decoded) == 1 and decoded[0].valid, (label,'QR is not scannable',decoded)
+            data = decoded[0].text
+            assert re.fullmatch(r'https?://[^/]+:876[56]',data), (label,'Unexpected remote QR URL',data)
             assert data.split('://',1)[1] in [n.get('text') for n in nodes], 'QR and live server address differ'
             assert 'v'+version in ' '.join(n.get('text','') for n in nodes)
             # D-pad visits every actionable dashboard group, including horizontally hidden TV Apps.

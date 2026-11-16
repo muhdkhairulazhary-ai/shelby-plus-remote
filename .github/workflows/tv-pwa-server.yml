@@ -39,8 +39,11 @@ jobs:
         with:
           packages: platform-tools
       - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install dashboard QR decoder
-        run: python3 -m pip install opencv-python-headless==4.12.0.88
+        run: python3 -m pip install Pillow==12.0.0 zxing-cpp==2.3.0
       - name: Install build dependencies
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Download public production OTA regression fixtures

@@ -111,7 +111,7 @@ class MainActivity : Activity() {
     private val PILL = Color.argb(153, 0, 0, 0)                        // the pill on an app's banner: TV Home's name scrim
     private val PILL_ON = Color.argb(230, 22, 128, 72)                // ...on a green that says it is on this TV
     private val PILL_NEW = Color.argb(235, 196, 110, 12)              // ...on amber: a newer one is in the latest release
-    private val ECO_W = 112                                           // an app's banner, dp: small, so the log below keeps its lines
+    private val ECO_W = 140                                           // an app's banner, dp: small, so the log below keeps its lines
 
     /**
      * One of the project's other TV apps (Bundle.apps) as TV Home draws a tile: its banner, the same rise and ring on focus, and a
@@ -943,7 +943,7 @@ class MainActivity : Activity() {
 
     /** Beside the banners: TV Home first, and that it needs no ADB, on the TVs that have none (the user, 2026-10-25). */
     private fun ecoText(): String = when {
-        eco.firstOrNull()?.on == true -> ""                       // all set: no line to read, the tiles say it
+        eco.firstOrNull()?.on == true -> eco.first().sub           // retain a useful description while focus is on another dashboard action
         adb == null && !connecting -> T("eco.note_noadb")
         else -> T("eco.note_adb")
     }
