@@ -15,8 +15,19 @@ def adb(*args):
 
 
 def tree():
-    adb('shell', 'uiautomator', 'dump', '/sdcard/shelby-dashboard.xml')
-    return ET.fromstring(adb('exec-out', 'cat', '/sdcard/shelby-dashboard.xml'))
+    last = b''
+    for _ in range(5):
+        # UIAutomator can exit 0 with a null accessibility root immediately after a display resize.
+        # Read only a newly successful dump, never a stale file left by the preceding frame.
+        last = adb('shell', 'uiautomator', 'dump', '/sdcard/shelby-dashboard.xml')
+        if b'dumped to:' in last:
+            raw = adb('exec-out', 'cat', '/sdcard/shelby-dashboard.xml')
+            try:
+                return ET.fromstring(raw)
+            except ET.ParseError:
+                last = raw[:240]
+        time.sleep(.4)
+    raise AssertionError(f'No valid native UI hierarchy after display configuration: {last!r}')
 
 
 def bounds(node):
@@ -39,7 +50,8 @@ def main():
             (output/f'{label}-display.txt').write_bytes(adb('shell','wm','size') + adb('shell','wm','density'))
             # Measure a fresh launch at each settled display configuration, not an intermediate wm resize.
             # -S stops only the disposable emulator process; it retains app data, pairing and settings.
-            adb('shell', 'am', 'start', '-S', '-W', '-n', 'dev.tvremote.setup/.MainActivity')
+            (output/f'{label}-launch.txt').write_bytes(adb('shell', 'am', 'start', '-S', '-W', '-n', 'dev.tvremote.setup/.MainActivity'))
+            (output/f'{label}-launch.png').write_bytes(adb('exec-out','screencap','-p'))
             for _ in range(15):
                 ui = tree()
                 if any('.settings' in n.get('package','') for n in ui.iter('node')):
@@ -64,6 +76,8 @@ def main():
             assert re.fullmatch(r'https?://[^/]+:876[56]',data), (label,'Unexpected remote QR URL',data)
             assert data.split('://',1)[1] in [n.get('text') for n in nodes], 'QR and live server address differ'
             assert 'v'+version in ' '.join(n.get('text','') for n in nodes)
+            logs = [bounds(n) for n in nodes if n.get('class') == 'android.widget.ScrollView']
+            assert any(b-a >= 36*density/160 for _,a,_,b in logs), (label,'Diagnostics panel lost usable height',logs)
             # D-pad visits every actionable dashboard group, including horizontally hidden TV Apps.
             seen = set()
             for key in [20,21,21,19,22,22,22,20,21,21,21,21,21,22,22,22,22,22,22,20,22,20,20,20,19,19]:
