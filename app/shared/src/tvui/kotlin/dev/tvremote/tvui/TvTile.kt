@@ -20,7 +20,7 @@ import android.widget.TextView
  * The shell has no content: the app puts its picture in with [fill] and may add its own views to [face] after (badges).
  * [dp] is the app's own conversion; the ring lies OUTSIDE the face, so the tile keeps its place and the card is that much larger.
  */
-open class TvTile(c: Context, w: Int, dp: (Number) -> Int, hPct: Int = 56) : LinearLayout(c) {   // hPct: the face's height in % of its width (56 = 16:9)
+open class TvTile(c: Context, w: Int, dp: (Number) -> Int, hPct: Int = 56, radius: Float = TvUi.R_TILE) : LinearLayout(c) {   // hPct: the face's height in % of its width (56 = 16:9)
     protected val card = FrameLayout(c)                             // what grows: the face and, round it, the ring
     protected val face = FrameLayout(c)                             // the picture, clipped to its rounded corners
     private val ring = View(c)
@@ -39,7 +39,7 @@ open class TvTile(c: Context, w: Int, dp: (Number) -> Int, hPct: Int = 56) : Lin
     private val dpOf = dp
     private var plain = false
     val pane: View get() = face                                     // where the glass goes
-    val corner = dp(TvUi.R_TILE).toFloat()
+    val corner = dp(radius).toFloat()
     var nudged: ((Float, Float) -> Unit)? = null                   // the glass leans with the card
 
     init {

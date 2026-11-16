@@ -327,3 +327,20 @@ TV Setup is presented as Shelby+ Remote, with the tagline “Your TV. Your Contr
 Shelby+ TV artwork comes from the exact root upload `0EC7D146-3DDF-4716-8FAC-91805B16C55B.png`. `dev/gen/shelby_art.py` copies it byte-for-byte to `drawable-nodpi/shelby_icon.png`, fits it without cropping or stretching on a black 320×180 xhdpi TV banner, and makes a 160×160 startup bitmap. Only MainActivity uses the branding startup theme (including Android 12+ splash attributes); no delay or additional activity is introduced. The header uses FIT_CENTER, and its attribution stays visible. The upstream art generators use different resource names.
 
 Shelby+ fork: the TV app update menu checks this fork only after a user request. Download requires confirmation, validates the pinned APK certificate and increasing version, then invokes the normal Android installer. After explicit Update consent, it may open Android’s installer-permission screen when required, then asks again on return; only Android and the user can grant it. It never clears local data. The scrollable update sheet shows current/available versions, release date and plain-text notes; failures persist until the next foreground visit. See ../SIGNING.md for the temporary-key migration.
+
+### Shelby+ dashboard Liquid Glass
+
+The native Shelby+ dashboard uses `LiquidGlass` in shared `tvui`: a navy atmospheric
+Drawable, translucent layered surfaces, a silver hairline and a blue focused edge.
+Static radial light gradients provide the appearance of a diffused backdrop on every
+supported Android version, including low-memory TVs. No live blur, wallpaper capture,
+software layers, timers or full-screen bitmap allocation: the same efficient fallback
+is used everywhere. Shaders are rebuilt only on bounds changes. Text and QR codes
+are rendered normally above the surfaces. Focus uses a short, restrained elevation
+transition; reduced motion and low-memory devices use immediate state changes.
+Existing colorful ecosystem banners remain distinct and keep their shared TvTile ring.
+TvTile accepts an optional corner radius for the dashboard’s 18 dp glass tiles;
+other callers retain the shared 10 dp default. Silver edges fade along their curves,
+and atmospheric gradients are statically stretched into diffused light reflections.
+Dashboard attribution belongs in the remotely accessible About / Licenses sheet,
+which retains the complete bundled MIT notice and functional upstream links.

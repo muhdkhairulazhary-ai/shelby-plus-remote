@@ -39,6 +39,11 @@ jobs:
         with:
           packages: platform-tools
       - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dashboard QR decoder
+        run: python3 -m pip install Pillow==12.0.0 zxing-cpp==2.3.0
       - name: Install build dependencies
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Download public production OTA regression fixtures
@@ -55,6 +60,7 @@ jobs:
           cp app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk emulator-ota/baseline.apk
           app/gradle/gradlew -p app/gradle --no-daemon -I ../../dev/test/shelby-emulator.init.gradle :tvsetup:assembleDebug
           cp app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk app/tvsetup/build/generated/ota-probe/candidate.apk
+          cp app/tvsetup/VERSION app/tvsetup/build/generated/ota-probe/candidate-version.txt
           app/gradle/gradlew -p app/gradle --no-daemon -I ../../dev/test/shelby-emulator.init.gradle :tvsetup:assembleDebugAndroidTest
       - name: Enable emulator acceleration
         run: |
@@ -66,9 +72,11 @@ jobs:
         with:
           api-level: 30
           target: android-tv
+          # Explicit TV profile; this API 30 image caps UI width at 1920. Genuine 4K is checked below.
+          profile: tv_1080p
           arch: x86
           disable-animations: true
-          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -skin 1280x720
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -skin 1920x1080
           script: |
             adb shell wm size 1280x720
             adb shell wm density 160
@@ -86,6 +94,7 @@ jobs:
             adb shell am start -n dev.tvremote.setup/.MainActivity
             adb forward tcp:8765 tcp:8765
             python3 dev/test/shelby_pwa_server.py > /tmp/shelby-pwa-server.txt 2>&1
+            python3 dev/test/shelby_dashboard_ui.py /tmp/shelby-dashboard-ui
             python3 dev/test/shelby_update_ui.py /tmp/shelby-update-ui > /tmp/shelby-update-ui.txt 2>&1
             timeout 10s adb logcat -d > /tmp/shelby-pwa-logcat.txt 2>/dev/null || true
       - name: Collect emulator evidence
@@ -94,6 +103,7 @@ jobs:
           mkdir -p evidence
           cp /tmp/shelby-pwa-server.txt evidence/ 2>/dev/null || true
           cp /tmp/shelby-pwa-logcat.txt evidence/logcat.txt 2>/dev/null || true
+          cp /tmp/shelby-dashboard-ui/* evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui.txt evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui/*.png evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui/*.xml evidence/ 2>/dev/null || true
@@ -113,3 +123,60 @@ jobs:
         with:
           name: tv-pwa-server-checks
           path: evidence/
+
+      - name: Share the minified emulator APK for native 4K layout validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: shelby-native-emulator-apk
+          path: app/tvsetup/build/generated/ota-probe/candidate.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  dashboard-4k:
+    needs: server
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: actions/download-artifact@v4
+        with:
+          name: shelby-native-emulator-apk
+          path: emulator-apk
+      - name: Install screenshot QR decoder
+        run: python3 -m pip install Pillow==12.0.0 zxing-cpp==2.3.0
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      # The Android TV image's config_maxUiWidth=1920 prevents native 4K screenshots.
+      # A tablet-sized Android display takes MainActivity's existing two-column dashboard path.
+      # No system image, launcher, feature flag or production code is patched to bypass that limit.
+      - name: Check actual 3840x2160 native dashboard canvas
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          profile: pixel_c
+          arch: x86
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -skin 1920x1080
+          script: |
+            adb install emulator-apk/candidate.apk
+            python3 dev/test/shelby_dashboard_ui.py /tmp/shelby-dashboard-4k --only-4k
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shelby-native-dashboard-4k
+          path: /tmp/shelby-dashboard-4k/
+          if-no-files-found: error

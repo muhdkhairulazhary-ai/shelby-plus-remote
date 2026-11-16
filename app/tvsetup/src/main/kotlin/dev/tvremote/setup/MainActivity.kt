@@ -34,6 +34,8 @@ import dev.tvremote.setup.link.Paired
 import dev.tvremote.setup.link.Tls
 import dev.tvremote.setup.rules.Guard
 import dev.tvremote.setup.rules.Rules
+import dev.tvremote.tvui.LiquidGlass
+import dev.tvremote.tvui.Motion
 import dev.tvremote.tvui.Marks
 import dev.tvremote.tvui.TvUi
 import dev.tvremote.update.Release
@@ -58,6 +60,7 @@ class MainActivity : Activity() {
     private lateinit var dot: View
     private lateinit var statusTitle: TextView
     private lateinit var statusDetail: TextView
+    private lateinit var deviceDetail: TextView
     private lateinit var pairLine: TextView                          // the pairing code, whenever this screen is in front instead of PairActivity
     private val pairPoll = object : Runnable {
         override fun run() {
@@ -67,6 +70,8 @@ class MainActivity : Activity() {
             if (shown) pairLine.postDelayed(this, 1000)
         }
     }
+    private lateinit var updateSummary: TextView
+    private lateinit var updateButton: Button
     private lateinit var logView: TextView
     private lateinit var bar: ProgressBar
     /** The bar at [pct] (0-100), or hidden with -1; from any thread. */
@@ -94,7 +99,7 @@ class MainActivity : Activity() {
     private var focusedOnce = false
 
     private val TILE = Color.rgb(34, 39, 47)
-    private val MUTED = Color.rgb(140, 150, 163)
+    private val MUTED = Color.rgb(198, 210, 224)
     private val SCRIM = Color.argb(215, 5, 7, 10)                     // behind a popup: the screen dimmed, still there
     private val ACCENT = Color.rgb(190, 42, 55)
     private val ACCENT_SOFT = Color.argb(64, 190, 42, 55)              // the person's bubble in Support replies, as on the phone page
@@ -106,14 +111,14 @@ class MainActivity : Activity() {
     private val PILL = Color.argb(153, 0, 0, 0)                        // the pill on an app's banner: TV Home's name scrim
     private val PILL_ON = Color.argb(230, 22, 128, 72)                // ...on a green that says it is on this TV
     private val PILL_NEW = Color.argb(235, 196, 110, 12)              // ...on amber: a newer one is in the latest release
-    private val ECO_W = 112                                           // an app's banner, dp: small, so the log below keeps its lines
+    private val ECO_W = 140                                           // an app's banner, dp: small, so the log below keeps its lines
 
     /**
      * One of the project's other TV apps (Bundle.apps) as TV Home draws a tile: its banner, the same rise and ring on focus, and a
      * pill saying whether it is on this TV. OK opens it, or offers to install it, with no ADB too (the user, 2026-10-25: TV Home first).
      */
     private inner class Eco(val app: dev.tvremote.core.ontv.Bundle.App, banner: Int) :
-        dev.tvremote.tvui.TvTile(this@MainActivity, dp(ECO_W), { n -> (n.toFloat() * resources.displayMetrics.density).roundToInt() }) {
+        dev.tvremote.tvui.TvTile(this@MainActivity, dp(ECO_W), { n -> (n.toFloat() * resources.displayMetrics.density).roundToInt() }, radius = 18f) {
         init { name.visibility = View.GONE }                          // what it does goes in the words beside it
         override val grows get() = false                             // focus = the ring only, no growth (the user, 2026-11-03: cut at top and bottom)
         val key = app.pkg.substringAfterLast('.')                    // home, channels, games, apps
@@ -127,6 +132,8 @@ class MainActivity : Activity() {
         init {
             faceColor(TvUi.CARD)                                      // the face's rounded outline, which clips the banner
             fill(ImageView(context).apply { setImageResource(banner); scaleType = ImageView.ScaleType.CENTER_CROP })
+            face.addView(View(context).apply { background = LiquidGlass.reflection(context, 18f); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
+                android.widget.FrameLayout.LayoutParams(-1, -1))
             pill.textSize = 10f; pill.setTextColor(Color.WHITE); pill.setPadding(dp(7), dp(2), dp(7), dp(2))
             face.addView(pill, android.widget.FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END).apply { setMargins(dp(5), dp(5), dp(5), dp(5)) })
             setOnFocusChangeListener { _, f -> focus(f); ecoNote?.text = if (f) said() else ecoText() }
@@ -169,7 +176,7 @@ class MainActivity : Activity() {
             view.setPadding(dp(10), dp(4), dp(10), dp(4))
             view.isFocusable = true
             view.isClickable = true
-            view.background = box(TILE, 14, 0)
+            view.background = LiquidGlass.states(this@MainActivity)
             badge.setImageResource(icon)
             badge.setColorFilter(TvUi.TEXT)
             badge.background = box(TvUi.CARD, 10, 0)
@@ -184,22 +191,21 @@ class MainActivity : Activity() {
             val words = LinearLayout(this@MainActivity)
             words.orientation = LinearLayout.VERTICAL
             words.setPadding(dp(10), 0, 0, 0)
-            val head = text(title, 13, TvUi.TEXT, true)
+            val head = text(title, 15, TvUi.TEXT, true)
             headView = head
             head.maxLines = 2                                         // four tiles across: a long name wraps, not "Manage on th…"
             head.ellipsize = TextUtils.TruncateAt.END
             words.addView(head)
-            subView = text(sub, 11, MUTED, false)
+            subView = text(sub, 12, MUTED, false)
             subView.maxLines = 2
             subView.ellipsize = TextUtils.TruncateAt.END
             words.addView(subView)
             view.addView(words, LinearLayout.LayoutParams(0, -2, 1f))
             view.setOnClickListener { if (!busy) run() else log(T("tv_main.busy")) }
             view.setOnFocusChangeListener { v, f ->
-                v.background = if (f) TvUi.ring(this@MainActivity, TILE, dp(14).toFloat()) else box(TILE, 14, 0)
+                LiquidGlass.focus(v, f)
                 badge.background = box(if (f) Color.argb(60, 255, 255, 255) else badgeFill, 10, 0)
                 subView.setTextColor(if (f) Color.WHITE else MUTED)
-                v.animate().scaleX(if (f) 1.06f else 1f).scaleY(if (f) 1.06f else 1f).setDuration(120).start()
             }
         }
         private var idle = sub
@@ -237,7 +243,8 @@ class MainActivity : Activity() {
         autoLauncher = intent?.getStringExtra("auto")?.takeIf { openLaunchers && it == dev.tvremote.home.HomeConfig.PKG }
         dev.tvremote.core.adb.Adb.holdFirstAsk(10000)                       // a phone turning ADB on asks first, then allows us too (AdbPrompt.helpSetup)
         val page = LinearLayout(this)
-        page.setBackgroundColor(TvUi.BG)
+        page.background = LiquidGlass.atmosphere()
+        Motion.read(this, true, "auto", "ring")
         if (phone) {
             page.orientation = LinearLayout.VERTICAL
             page.setPadding(dp(16), dp(20), dp(16), dp(24))
@@ -259,22 +266,22 @@ class MainActivity : Activity() {
             override fun getOutline(v: View, o: android.graphics.Outline) { o.setRoundRect(0, 0, v.width, v.height, resources.getDimension(R.dimen.tv_head_radius)) }
         }
         logo.clipToOutline = true
-        val ic = if (phone) dp(38) else resources.getDimension(R.dimen.tv_head_icon).toInt()
+        val ic = if (phone) dp(48) else dp(68)
         head.addView(logo, LinearLayout.LayoutParams(ic, ic))
         val names = LinearLayout(this)
         names.orientation = LinearLayout.VERTICAL
         names.setPadding(resources.getDimension(R.dimen.tv_head_gap).toInt(), 0, 0, 0)
-        names.addView(text("Shelby+ Remote", if (phone) 20 else 24, TvUi.TEXT, true))
+        names.addView(text("Shelby+ Remote", if (phone) 22 else 28, TvUi.TEXT, true))
         names.addView(text("Your TV. Your Control.", 14, TvUi.TEXT, false))
-        if (version() == "0.53.5") names.addView(text(T("shelby_update.ota_test_label", "v" to version()), 14, TvUi.TEXT, true))
-        names.addView(text("v" + version() + released().let { if (it.isEmpty()) "" else " · $it" }
-            + " · Hoang Tran · tvremote.pages.dev", 12, MUTED, false).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })   // the version in use here; the Update tile says whether a newer one exists
+        names.addView(text(T("shelby_dashboard.developed_by"), 13, TvUi.TEXT, true))
+        names.addView(text("v" + version() + released().let { if (it.isEmpty()) "" else " · $it" }, 12, MUTED, false).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })   // the version in use here; the Update tile says whether a newer one exists
         head.addView(names, LinearLayout.LayoutParams(0, -2, 1f))
+        head.addView(smallButton(T("shelby_dashboard.about_licenses")) { aboutLicenses() }, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(8) })
         left.addView(head)
 
         val status = LinearLayout(this)
         status.gravity = Gravity.CENTER_VERTICAL
-        status.background = box(TvUi.CARD, 16, 0)
+        status.background = LiquidGlass.surface(this)
         status.setPadding(dp(16), dp(10), dp(16), dp(10))
         dot = View(this)
         status.addView(dot, LinearLayout.LayoutParams(dp(10), dp(10)))
@@ -284,13 +291,15 @@ class MainActivity : Activity() {
         statusTitle = text("", 15, TvUi.TEXT, true)
         statusDetail = text("", 12, MUTED, false)
         st.addView(statusTitle)
+        deviceDetail = text("${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE}", 12, MUTED, false)
+        st.addView(deviceDetail)
         st.addView(statusDetail)
         status.addView(st, LinearLayout.LayoutParams(0, -2, 1f))
         left.addView(status, margins(top = 12))
         // Since Android 10 a service cannot open PairActivity over another app, and the shell route fails when ADB is off: without
         // this line a phone asking to pair would leave the person with a code nobody can see.
         pairLine = text("", 20, TvUi.TEXT, true).apply {
-            background = box(TvUi.CARD, 16, 0); setPadding(dp(16), dp(10), dp(16), dp(10)); visibility = View.GONE
+            background = LiquidGlass.surface(this@MainActivity); setPadding(dp(16), dp(10), dp(16), dp(10)); visibility = View.GONE
         }
         left.addView(pairLine, margins(top = 8))
 
@@ -315,13 +324,13 @@ class MainActivity : Activity() {
             startActivity(android.content.Intent(this, PinActivity::class.java).putExtra("kids_off", true))
         }
         kidsOffTile.view.visibility = View.GONE
-        left.addView(kidsOffTile.view, LinearLayout.LayoutParams(-1, dp(if (phone) 76 else 60)).apply { topMargin = dp(if (phone) 8 else 12) })
+        left.addView(kidsOffTile.view, LinearLayout.LayoutParams(-1, dp(if (phone) 76 else 72)).apply { topMargin = dp(if (phone) 8 else 12) })
         val grid = listOf(manage) + if (phone) tiles else tiles.filter { it !== updateTile }   // Manage first, in the grid: no ragged last row
         val cols = if (phone) 2 else 3                                 // TV: one row of three; phone: 2 x 2
         for (row in grid.chunked(cols)) {
             val r = LinearLayout(this)
             r.clipChildren = false
-            row.forEachIndexed { i, tile -> r.addView(tile.view, LinearLayout.LayoutParams(0, dp(if (phone) 76 else 60), 1f).apply { if (i > 0) leftMargin = dp(10) }) }
+            row.forEachIndexed { i, tile -> r.addView(tile.view, LinearLayout.LayoutParams(0, dp(if (phone) 76 else 72), 1f).apply { if (i > 0) leftMargin = dp(10) }) }
             left.addView(r, margins(top = if (phone) 8 else 12))
         }
 
@@ -370,6 +379,13 @@ class MainActivity : Activity() {
             ecoPaint()
         }
 
+        val updates = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        updateSummary = text("", 13, TvUi.TEXT, true).apply { maxLines = 2; ellipsize = TextUtils.TruncateAt.END }
+        updateButton = smallButton(T("tv_main.update_check")) { updateMenu() }
+        updates.addView(updateSummary, LinearLayout.LayoutParams(0, -2, 1f))
+        updates.addView(updateButton, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(8) })
+        left.addView(updates, margins(top = 6))
+        showUpdate()
         if (phone) left.addView(section(T("tv_main.activity")), margins(top = 18))
         spinner = ProgressBar(this)                                   // in the log's corner: work going on shows where its lines come
         spinner.isIndeterminate = true
@@ -377,10 +393,10 @@ class MainActivity : Activity() {
         logView = text(T("tv_main.activity_empty"), 14, MUTED, false)   // until the first line
         logView.setLineSpacing(dp(3).toFloat(), 1f)
         scroll = TvScroll(this)
-        scroll.background = box(TvUi.CARD, 14, 0)
+        scroll.background = LiquidGlass.states(this)
         scroll.setPadding(dp(16), dp(10), dp(16), dp(10))
         scroll.isFocusable = true                                     // D-pad can scroll back to an error that went by
-        scroll.onFocusChangeListener = View.OnFocusChangeListener { v, on -> v.background = if (on) TvUi.ring(this@MainActivity, TvUi.CARD, dp(14).toFloat()) else box(TvUi.CARD, 14, 0) }
+        scroll.onFocusChangeListener = View.OnFocusChangeListener { v, on -> LiquidGlass.focus(v, on) }
         scroll.addView(logView)
         val logBox = android.widget.FrameLayout(this)
         logBox.addView(scroll, android.widget.FrameLayout.LayoutParams(-1, -1))
@@ -394,7 +410,7 @@ class MainActivity : Activity() {
         // ---- right: taking over from a phone or a computer
         webCol = LinearLayout(this)
         webCol.orientation = LinearLayout.VERTICAL
-        webCol.background = box(TvUi.CARD, 18, 0)
+        webCol.background = LiquidGlass.surface(this, 26)
         webCol.setPadding(dp(18), dp(14), dp(18), dp(14))
         webBtn = smallButton("") { RemoteService.setEnabled(this, !RemoteService.enabled(this)); showWeb(); webBtn.requestFocus() }
         if (phone) {                                                  // header, status, then the card (what a phone is mostly here for), the tiles, the log
@@ -408,9 +424,11 @@ class MainActivity : Activity() {
             outer.addView(page)
             setContentView(outer)
         } else {
-            left.addView(logBox, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(if (eco.isEmpty()) 12 else 22) })   // under a focused banner's rise
+            left.addView(logBox, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(8) })   // under a focused banner's rise
             page.addView(left, LinearLayout.LayoutParams(0, -1, 1f))
-            page.addView(webCol, LinearLayout.LayoutParams(dp(260), -1).apply { leftMargin = dp(20) })
+            val rightWidth = ((resources.displayMetrics.widthPixels - page.paddingLeft - page.paddingRight - dp(20)) * .30f)
+                .roundToInt().coerceIn(dp(240), dp(340))
+            page.addView(webCol, LinearLayout.LayoutParams(rightWidth, -1).apply { leftMargin = dp(20) })
             setContentView(page)
         }
 
@@ -447,7 +465,16 @@ class MainActivity : Activity() {
 
     /** The Update tile says what is true now: a newer version to install (lit), up to date, or not known (the user, 2026-10-26:
      *  an "Update" tile always there, with a version number nobody could tell was this one or the next, was confusing). */
-    private fun showUpdate() { eco.firstOrNull()?.paint(); when (val v = newer) {   // TV Setup's own banner says it too
+    private fun showUpdate() {
+        if (::updateSummary.isInitialized) {
+            updateSummary.text = "Shelby+ Remote " + version() + " · " + when (val v = newer) {
+                null -> T("tv_main.update_check")
+                "" -> T("tv_main.up_to_date")
+                else -> T("tv_main.update_to", "v" to v)
+            }
+            updateButton.text = if (newer.isNullOrEmpty()) T("tv_main.update_check") else T("tv_main.update_to", "v" to newer!!)
+        }
+        eco.firstOrNull()?.paint(); when (val v = newer) {   // TV Setup's own banner says it too
         null -> updateTile.show(T("setup.update_ok"), T("tv_main.update_check"), R.drawable.ic_download)
         "" -> updateTile.show(T("tv_main.up_to_date"), autoText(), R.drawable.ic_check)
         else -> updateTile.show(T("tv_main.update_to", "v" to v), T("tv_main.update_from", "v" to version()), R.drawable.ic_download, hot = true)
@@ -590,7 +617,7 @@ class MainActivity : Activity() {
             val scheme = if (secure) "https://" else "http://"
             val port = if (secure) RemoteService.HTTPS_PORT else RemoteService.PORT
             val link = scheme + ip + ":" + port
-            qr(link)?.let { webCol.addView(it, LinearLayout.LayoutParams(dp(136), dp(136)).apply { topMargin = dp(10); gravity = Gravity.CENTER_HORIZONTAL }) }
+            qr(link)?.let { webCol.addView(it, LinearLayout.LayoutParams(dp(if (resources.configuration.screenHeightDp < 600) 144 else 184), dp(if (resources.configuration.screenHeightDp < 600) 144 else 184)).apply { topMargin = dp(10); gravity = Gravity.CENTER_HORIZONTAL }) }
             val addr = text(link.removePrefix(scheme), 15, TvUi.TEXT, true)
             addr.gravity = Gravity.CENTER
             webCol.addView(addr, margins(top = 8))
@@ -617,7 +644,22 @@ class MainActivity : Activity() {
         if (focused != null && focused.parent == null) webBtn.requestFocus()   // the focused button was rebuilt: keep the focus on this card
     }
 
-    /** The phone app's download QR, alone on a card over the screen. */
+    /** Complete upstream notice remains visible, with its original authorship and links. */
+    private fun aboutLicenses() {
+        val (dialog, content) = TvUi.sheet(this, R.style.TvSheet, 520)
+        TvUi.sheetTitle(content, T("shelby_dashboard.about_licenses"))
+        TvUi.sheetNote(content, "Shelby+ Remote · " + T("shelby_dashboard.developed_by"))
+        TvUi.sheetNote(content, assets.open("LICENSE").bufferedReader().use { it.readText() })
+        TvUi.sheetNote(content, T("shelby_dashboard.third_party"))
+        content.addView(smallButton("tvremote.pages.dev") {
+            try { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://tvremote.pages.dev"))) }
+            catch (e: android.content.ActivityNotFoundException) { log("https://tvremote.pages.dev · " + reason(e)) }
+        }, margins(top = 8))
+        content.addView(smallButton(T("common.close")) { dialog.dismiss() }, margins(top = 8))
+        dialog.show()
+    }
+
+    /** The phone app’s download QR, alone on a card over the screen. */
     private fun appQr() {
         val d = android.app.Dialog(this, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen)
         val root = android.widget.FrameLayout(this)
@@ -666,8 +708,8 @@ class MainActivity : Activity() {
     }
 
     private fun qr(link: String): View? {
-        // 2 modules of white and no padding: with the standard 4 plus padding the code itself was a third smaller and hard to scan from the sofa
-        val bmp = dev.tvremote.core.web.Qr.bitmap(link, 1, quiet = 2) ?: return null
+        // Standard four-module white quiet zone; no glass tint or highlight overlays the QR.
+        val bmp = dev.tvremote.core.web.Qr.bitmap(link, 1, quiet = 4) ?: return null
         val img = ImageView(this)
         img.setImageDrawable(android.graphics.drawable.BitmapDrawable(resources, bmp).apply { isFilterBitmap = false })   // sharp module edges when scaled up
         img.scaleType = ImageView.ScaleType.FIT_XY
@@ -841,6 +883,8 @@ class MainActivity : Activity() {
         dot.background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(color) }
         statusTitle.text = title
         statusTitle.setTextColor(if (color == OK) TvUi.TEXT else color)
+        // ADB's connected description already includes the real TV model/OS. Local facts remain visible while disconnected.
+        deviceDetail.visibility = if (color == OK) View.GONE else View.VISIBLE
         statusDetail.text = detail
         statusDetail.visibility = if (detail.isEmpty()) View.GONE else View.VISIBLE
     }
@@ -899,7 +943,7 @@ class MainActivity : Activity() {
 
     /** Beside the banners: TV Home first, and that it needs no ADB, on the TVs that have none (the user, 2026-10-25). */
     private fun ecoText(): String = when {
-        eco.firstOrNull()?.on == true -> ""                       // all set: no line to read, the tiles say it
+        eco.firstOrNull()?.on == true -> eco.first().sub           // retain a useful description while focus is on another dashboard action
         adb == null && !connecting -> T("eco.note_noadb")
         else -> T("eco.note_adb")
     }
@@ -1771,8 +1815,8 @@ class MainActivity : Activity() {
         b.setOnClickListener(l)
         b.isFocusable = true
         b.setTextColor(Color.WHITE)
-        b.background = box(TILE, 10, 0)
-        b.setOnFocusChangeListener { v, f -> v.background = if (f) box(ACCENT, 10, 2) else box(TILE, 10, 0) }
+        b.background = LiquidGlass.states(this, 18)
+        b.setOnFocusChangeListener { v, f -> LiquidGlass.focus(v, f) }
         b.minHeight = 0
         b.minimumHeight = 0
         b.minWidth = 0

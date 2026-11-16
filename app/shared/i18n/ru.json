@@ -4967,6 +4967,8 @@
  "shelby_update.cancelled": "Обновление отменено. Установленное приложение не изменилось.",
  "shelby_update.install_failed": "Android не смог установить обновление. Сохраните текущее приложение и повторите с проверенным выпуском.",
  "shelby_update.permission": "Разрешите Shelby+ Remote запрашивать установку в Android, затем вернитесь и подтвердите обновление.",
- "shelby_update.ota_test_label": "OTA Test v{v}",
- "shelby_update.diagnostic": "Подробности обновления: {detail}"
+ "shelby_update.diagnostic": "Подробности обновления: {detail}",
+ "shelby_dashboard.developed_by": "Developed by plus+",
+ "shelby_dashboard.about_licenses": "О приложении / Лицензии",
+ "shelby_dashboard.third_party": "Оригинальный TV Remote: Hoang Tran · MIT. Сторонние компоненты сохраняют исходные лицензии; уведомления доступны в исходном проекте."
 }

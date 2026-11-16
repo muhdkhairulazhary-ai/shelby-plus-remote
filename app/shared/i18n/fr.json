@@ -4896,6 +4896,8 @@
  "shelby_update.cancelled": "Mise à jour annulée. L’app installée reste inchangée.",
  "shelby_update.install_failed": "Android n’a pas pu installer la mise à jour. Gardez l’app actuelle et réessayez avec une version vérifiée.",
  "shelby_update.permission": "Autorisez Shelby+ Remote à demander une installation dans Android, puis revenez confirmer la mise à jour.",
- "shelby_update.ota_test_label": "OTA Test v{v}",
- "shelby_update.diagnostic": "Détails de la mise à jour : {detail}"
+ "shelby_update.diagnostic": "Détails de la mise à jour : {detail}",
+ "shelby_dashboard.developed_by": "Developed by plus+",
+ "shelby_dashboard.about_licenses": "À propos / Licences",
+ "shelby_dashboard.third_party": "TV Remote original par Hoang Tran · MIT. Les composants tiers conservent leurs licences ; consultez le code source original pour leurs notices."
 }

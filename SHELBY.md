@@ -58,3 +58,27 @@ Primary visual reference: `3093A066-A1DA-4B74-91A4-6B080CA5D0FD.png` (uploaded a
 `dev/test/shelby_glass_browser.py` exercises Chromium and WebKit at 320, 390, 430 and 1100 CSS pixels, with simulated PRISM+ responses and installed apps. It checks real page handlers for taps, hold/release, pointer cancellation, typing, app filtering/launching, Power confirmation, settings and all tabs, plus pairing and view-only gating. Screenshots show simulated data and are not device-compatibility evidence. The separate Android TV emulator still checks actual RemoteService HTTP paths and security on port 8765. No real iPhone or PRISM+ hardware verification is claimed.
 
 Release assets include Chromium/WebKit screenshots and GLASS-VALIDATION.json. Signing is compared against `shelby-tv-v0.52.2-2`; that release used a discarded temporary key, so a new key prevents an in-place update. Read UPDATE-COMPATIBILITY.txt before installing. A fresh installation can lose pairings/settings; private keys are never published.
+
+## Native TV dashboard (0.53.6 review build)
+
+The TV dashboard retains its existing Manage, Optimize, Connection, ecosystem apps,
+phone pairing, web server and update actions. Its navy Liquid Glass surfaces use
+static diffuse lighting rather than live blur or screenshot capture, with blue D-pad
+focus and system reduced-motion support. The official logo is unchanged.
+“Developed by plus+” identifies this fork’s branding; **About / Licenses** retains
+Hoang Tran’s original MIT notice and the functional upstream documentation link.
+Connection details, QR/address, build date, versions and update diagnostics are live.
+
+This review increments only the TV app version to **0.53.6 / 105306**. The package ID,
+production signing configuration, pairing storage and OTA verification are unchanged.
+Production in-place updates require the existing permanent key through the protected
+release workflow after review; validation APKs use disposable test certificates and
+are not production updates. No release is published by this change.
+
+`dev/test/shelby_dashboard_ui.py` captures the real native dashboard on an isolated
+Android TV emulator at 720p, 1080p and compact 1080p density, decodes its live QR
+and checks bounded D-pad focus. The TV API 30 image caps UI width at 1920; a separate
+large-screen Android emulator checks the same APK’s two-column dashboard at an
+actual 3840×2160 canvas, without patching the TV system image. Screenshots assert
+their pixel dimensions; these emulator checks do not establish real 4K TV compatibility. Physical PRISM+ rendering, remote performance and
+camera scanning at viewing distance still require hardware testing.
