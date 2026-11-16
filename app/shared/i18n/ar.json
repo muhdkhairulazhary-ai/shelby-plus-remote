@@ -5122,5 +5122,6 @@
  "shelby_update.cancelled": "أُلغي التحديث. لم يتغيّر التطبيق المثبّت.",
  "shelby_update.install_failed": "تعذّر على Android تثبيت التحديث. احتفظ بالتطبيق الحالي وحاول مجددًا بإصدار موثوق.",
  "shelby_update.permission": "اسمح لـ Shelby+ Remote بطلب التثبيت في Android، ثم عُد لتأكيد التحديث.",
- "shelby_update.ota_test_label": "OTA Test v{v}"
+ "shelby_update.ota_test_label": "OTA Test v{v}",
+ "shelby_update.diagnostic": "تفاصيل التحديث: {detail}"
 }

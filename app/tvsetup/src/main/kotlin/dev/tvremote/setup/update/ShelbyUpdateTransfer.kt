@@ -11,10 +11,13 @@ internal object ShelbyUpdateTransfer {
     class MissingMetadata : Exception()
     class NoSpace : IOException()
     class Cancelled : Exception()
-    class InvalidDownload : Exception()
+    class InvalidDownload(val reason: String = "APK_INTEGRITY_INVALID", val facts: String = "") : Exception()
     class InstallationFailure : Exception()
 
-    fun latest(current: Long, pin: String, text: (String, Int) -> String): ShelbyUpdatePolicy.Candidate? {
+    fun latest(current: Long, pin: String, text: (String, Int) -> String): ShelbyUpdatePolicy.Candidate? = latest(current, pin, {}, text)
+
+    fun latest(current: Long, pin: String, stage: (String) -> Unit, text: (String, Int) -> String): ShelbyUpdatePolicy.Candidate? {
+        stage("RELEASE_DISCOVERY")
         val latest = JSONObject(text("https://api.github.com/repos/${ShelbyUpdatePolicy.REPO}/releases/latest", 65536))
         require(!latest.getBoolean("draft") && !latest.getBoolean("prerelease"))
         val tag = latest.getString("tag_name")
@@ -22,7 +25,10 @@ internal object ShelbyUpdateTransfer {
         val assets = latest.getJSONArray("assets")
         val names = (0 until assets.length()).map { assets.getJSONObject(it).getString("name") }
         if ("shelby-update.json" !in names || ShelbyUpdatePolicy.ASSET !in names) throw MissingMetadata()
-        return ShelbyUpdatePolicy.parse(text("https://github.com/${ShelbyUpdatePolicy.REPO}/releases/download/$tag/shelby-update.json", 32768), tag, current, pin)
+        stage("METADATA_HTTPS")
+        val json = text("https://github.com/${ShelbyUpdatePolicy.REPO}/releases/download/$tag/shelby-update.json", 32768)
+        stage("METADATA_VALIDATION")
+        return ShelbyUpdatePolicy.parse(json, tag, current, pin)
     }
 
     fun copy(input: InputStream, output: OutputStream, candidate: ShelbyUpdatePolicy.Candidate, free: Long,
@@ -36,12 +42,13 @@ internal object ShelbyUpdateTransfer {
             if (!active()) throw Cancelled()
             val n = input.read(buffer); if (n < 0) break
             count += n
-            if (count > candidate.bytes || count > ShelbyUpdatePolicy.MAX_APK) throw InvalidDownload()
+            if (count > candidate.bytes || count > ShelbyUpdatePolicy.MAX_APK) throw InvalidDownload("APK_SIZE_LIMIT")
             output.write(buffer, 0, n); digest.update(buffer, 0, n)
             progress((count * 100 / candidate.bytes).toInt())
         }
         val hash = digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
-        if (count != candidate.bytes || hash != candidate.sha256) throw InvalidDownload()
+        if (count != candidate.bytes) throw InvalidDownload("APK_LENGTH_MISMATCH", "expected=${candidate.bytes} actual=$count")
+        if (hash != candidate.sha256) throw InvalidDownload("APK_SHA256_MISMATCH", "expected=${candidate.sha256} actual=$hash")
     }
 
     /** PackageInstaller status codes; no platform calls in this policy. */

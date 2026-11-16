@@ -11,6 +11,10 @@ class ShelbyInstallReceiver : BroadcastReceiver() {
     companion object { @Volatile var notifyResult: ((String) -> Unit)? = null }
     override fun onReceive(c: Context, intent: Intent) {
         val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
+        val detail = "OTA[INSTALLER_RESULT] status=$status session=${intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1)}"
+        android.util.Log.i("ShelbyOTA", detail)
+        c.getSharedPreferences("shelby_update", Context.MODE_PRIVATE).edit().putString("diagnostic", detail).apply()
+        if (status == PackageInstaller.STATUS_SUCCESS) c.getSharedPreferences("shelby_update", Context.MODE_PRIVATE).edit().remove("result").apply()
         var result = ShelbyUpdateTransfer.installationFailure(status)
         if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
             @Suppress("DEPRECATION")

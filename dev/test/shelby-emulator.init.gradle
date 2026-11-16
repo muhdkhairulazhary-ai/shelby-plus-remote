@@ -5,6 +5,13 @@ gradle.beforeProject { p ->
             p.extensions.getByName('androidComponents').finalizeDsl { android ->
                 android.defaultConfig.ndk.abiFilters.clear()
                 android.defaultConfig.ndk.abiFilters.add('x86')
+                // Exercise production shrinking too: unshrunk JVM/debug tests missed reflective ASN.1 field removal.
+                def debug = android.buildTypes.getByName('debug')
+                debug.minifyEnabled = true
+                debug.proguardFiles(android.getDefaultProguardFile('proguard-android-optimize.txt'),
+                    new File(p.projectDir, '../shared/proguard-rules.pro'),
+                    new File(p.projectDir, 'proguard-rules.pro'),
+                    new File(p.rootProject.projectDir, '../../dev/test/shelby-ota-probe.pro'))
             }
         }
     }
