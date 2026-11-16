@@ -60,6 +60,7 @@ class MainActivity : Activity() {
     private lateinit var dot: View
     private lateinit var statusTitle: TextView
     private lateinit var statusDetail: TextView
+    private lateinit var deviceDetail: TextView
     private lateinit var pairLine: TextView                          // the pairing code, whenever this screen is in front instead of PairActivity
     private val pairPoll = object : Runnable {
         override fun run() {
@@ -290,6 +291,8 @@ class MainActivity : Activity() {
         statusTitle = text("", 15, TvUi.TEXT, true)
         statusDetail = text("", 12, MUTED, false)
         st.addView(statusTitle)
+        deviceDetail = text("${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE}", 12, MUTED, false)
+        st.addView(deviceDetail)
         st.addView(statusDetail)
         status.addView(st, LinearLayout.LayoutParams(0, -2, 1f))
         left.addView(status, margins(top = 12))
@@ -880,6 +883,8 @@ class MainActivity : Activity() {
         dot.background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(color) }
         statusTitle.text = title
         statusTitle.setTextColor(if (color == OK) TvUi.TEXT else color)
+        // ADB's connected description already includes the real TV model/OS. Local facts remain visible while disconnected.
+        deviceDetail.visibility = if (color == OK) View.GONE else View.VISIBLE
         statusDetail.text = detail
         statusDetail.visibility = if (detail.isEmpty()) View.GONE else View.VISIBLE
     }

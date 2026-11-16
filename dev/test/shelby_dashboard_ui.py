@@ -64,6 +64,24 @@ def main():
                 assert 0 <= x1 < x2 <= width and 0 <= y1 < y2 <= height, (label,'Focus outside viewport',bounds(n))
             assert len(seen) >= 5, (label,'D-pad navigation stuck',seen)
             (output/f'{label}-focus.png').write_bytes(adb('exec-out','screencap','-p'))
+            if label == '720p':
+                for _ in range(24):
+                    view = tree()
+                    about = next(n for n in view.iter('node') if n.get('text') == 'About / Licenses')
+                    focused = next(n for n in view.iter('node') if n.get('focused') == 'true')
+                    if about.get('focused') == 'true':
+                        adb('shell','input','keyevent','23'); break
+                    x1,y1,x2,y2 = bounds(about); a,b,c,d = bounds(focused)
+                    dx = (x1+x2-a-c)/2; dy = (y1+y2-b-d)/2
+                    key = 20 if dy > 40 else 19 if dy < -40 else 22 if dx > 0 else 21
+                    adb('shell','input','keyevent',str(key))
+                else: raise AssertionError('About / Licenses cannot be reached using D-pad')
+                legal = tree()
+                assert any('Copyright (c) 2026 Hoang Tran' in n.get('text','') and 'MIT License' in n.get('text','') for n in legal.iter('node')), 'Complete upstream attribution is inaccessible'
+                assert any(n.get('text') == 'tvremote.pages.dev' for n in legal.iter('node')), 'Upstream functional link missing'
+                (output/'licenses.xml').write_bytes(ET.tostring(legal))
+                (output/'licenses.png').write_bytes(adb('exec-out','screencap','-p'))
+                adb('shell','input','keyevent','4')
             print(f'{label}: visible branding/actions, version, live QR/address, bounded D-pad focus PASS ({len(seen)} targets)')
     finally:
         adb('shell','wm','size','1280x720')

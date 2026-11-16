@@ -70,6 +70,8 @@ object LiquidGlass {
     }
 
     fun states(c: Context, radius: Int = 22) = StateListDrawable().apply {
+        val fade = if (Motion.on && !Motion.calm) 120 else 0
+        setEnterFadeDuration(fade); setExitFadeDuration(fade)
         addState(intArrayOf(android.R.attr.state_focused), surface(c, radius, true))
         addState(intArrayOf(android.R.attr.state_pressed), surface(c, radius, true))
         addState(intArrayOf(), surface(c, radius))
