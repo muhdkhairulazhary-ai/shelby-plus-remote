@@ -62,7 +62,11 @@ def main():
                 view = tree()
                 focused = [n for n in view.iter('node') if n.get('focused') == 'true']
                 assert focused, (label,'D-pad focus lost')
-                n = focused[0]; seen.add(n.get('content-desc') or n.get('text') or n.get('class'))
+                n = focused[0]
+                # Focusable groups expose their labels through child TextViews. A class name alone
+                # collapses every distinct LinearLayout action into the same apparent target.
+                seen.add((n.get('class'), n.get('bounds'), n.get('content-desc'),
+                          tuple(c.get('text') for c in n.iter('node') if c.get('text'))))
                 x1,y1,x2,y2 = bounds(n)
                 assert 0 <= x1 < x2 <= width and 0 <= y1 < y2 <= height, (label,'Focus outside viewport',bounds(n))
             assert len(seen) >= 5, (label,'D-pad navigation stuck',seen)
