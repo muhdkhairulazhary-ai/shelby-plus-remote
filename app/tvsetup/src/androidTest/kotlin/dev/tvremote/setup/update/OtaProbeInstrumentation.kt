@@ -16,7 +16,9 @@ class OtaProbeInstrumentation : Instrumentation() {
         try {
             val old = JSONObject(context.assets.open("0.53.2/shelby-update.json").bufferedReader().use { it.readText() })
             val json = context.assets.open("0.53.3/shelby-update.json").bufferedReader().use { it.readText() }
-            val candidate = ShelbyUpdatePolicy.parse(json,"shelby-tv-v0.53.3-1",105302,old.getString("certificateSha256"))!!
+            val pin = "fc3d3e8fc28694813921f70ece534eae1d2c00913cc8bdb711c5f4da0ef2ece5" // public production baseline
+            check(old.getString("certificateSha256") == pin)
+            val candidate = ShelbyUpdatePolicy.parse(json,"shelby-tv-v0.53.3-1",105302,pin)!!
             trace.append("metadata PASS ${candidate.version} code=${candidate.code}\n")
             val apk = File(targetContext.cacheDir,"production-0.53.3.apk")
             context.assets.open("0.53.3/shelby-plus-remote-tv.apk").use { input -> apk.outputStream().use { output ->
@@ -41,7 +43,9 @@ class OtaProbeInstrumentation : Instrumentation() {
             apk.delete()
         } catch (error: Throwable) {
             trace.append(error.javaClass.name).append(": ").append(error.message).append('\n')
-            trace.append(error.stackTraceToString())
+            val writer = java.io.StringWriter()
+            error.printStackTrace(java.io.PrintWriter(writer))
+            trace.append(writer.toString())
             result.putString("ota_status","FAIL")
         }
         result.putString("ota_trace",trace.toString())
