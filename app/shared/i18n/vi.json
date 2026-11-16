@@ -4725,6 +4725,8 @@
  "shelby_update.cancelled": "Đã hủy cập nhật. App đang dùng vẫn như cũ.",
  "shelby_update.install_failed": "Android không cài được bản cập nhật. Giữ app hiện tại rồi thử lại bằng bản phát hành đã kiểm tra.",
  "shelby_update.permission": "Cho phép Shelby+ Remote yêu cầu cài app trong Android, rồi quay lại đây để xác nhận cập nhật.",
- "shelby_update.ota_test_label": "OTA Test v{v}",
- "shelby_update.diagnostic": "Chi tiết cập nhật: {detail}"
+ "shelby_update.diagnostic": "Chi tiết cập nhật: {detail}",
+ "shelby_dashboard.developed_by": "Developed by plus+",
+ "shelby_dashboard.about_licenses": "Giới thiệu / Giấy phép",
+ "shelby_dashboard.third_party": "TV Remote gốc của Hoang Tran · MIT. Các thành phần bên thứ ba giữ giấy phép gốc; xem mã nguồn dự án gốc để biết thông báo thành phần."
 }

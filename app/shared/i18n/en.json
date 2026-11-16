@@ -4863,6 +4863,8 @@
  "shelby_update.cancelled": "Update cancelled. The installed app is unchanged.",
  "shelby_update.install_failed": "Android could not install the update. Keep the current app and try again from a verified release.",
  "shelby_update.permission": "Allow Shelby+ Remote to request installation in Android, then return here to confirm the update.",
- "shelby_update.ota_test_label": "OTA Test v{v}",
- "shelby_update.diagnostic": "Update details: {detail}"
+ "shelby_update.diagnostic": "Update details: {detail}",
+ "shelby_dashboard.developed_by": "Developed by plus+",
+ "shelby_dashboard.about_licenses": "About / Licenses",
+ "shelby_dashboard.third_party": "TV Remote by Hoang Tran · MIT. Third-party licenses and component notices: upstream source."
 }

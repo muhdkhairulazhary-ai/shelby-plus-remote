@@ -28,7 +28,7 @@ def main():
         if any('.settings' in n.get('package','') for n in ui.iter('node')):
             adb('shell','input','keyevent','4')
             continue
-        if any(n.get('text')=='Check for updates' for n in ui.iter('node')):
+        if any(n.get('text')==f'Shelby+ Remote {version}' and n.get('class')=='android.widget.TextView' for n in ui.iter('node')):
             break
         tile=next(n for n in ui.iter('node') if n.get('content-desc')==f'Shelby+ Remote {version}' and n.get('clickable')=='true')
         if version == '0.53.5':

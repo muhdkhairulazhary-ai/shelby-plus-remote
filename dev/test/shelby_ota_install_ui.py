@@ -21,6 +21,9 @@ def center(node):
 
 def main():
     output=Path(sys.argv[1]);output.mkdir(parents=True,exist_ok=True)
+    major,minor,patch=map(int,Path("app/tvsetup/VERSION").read_text().strip().split("."))
+    candidate=100000+major*10000+minor*100+patch
+    assert candidate>105304
     assert code()==105304,'Candidate installed without user confirmation'
     for _ in range(24):
         ui=tree()
@@ -45,11 +48,11 @@ def main():
     else:raise AssertionError('Could not focus Android confirmation with D-pad')
     until=time.monotonic()+45
     while time.monotonic()<until:
-        if code()==105305:break
+        if code()==candidate:break
         time.sleep(.5)
     else:raise AssertionError('User-confirmed package update did not complete')
     (output/'installed.png').write_bytes(adb('exec-out','screencap','-p'))
-    print('Standard Android PackageInstaller confirmation + D-pad consent + in-place105304->105305 PASS (isolated test-key emulator only)')
+    print(f'Standard Android PackageInstaller confirmation + D-pad consent + in-place105304->{candidate} PASS (isolated test-key emulator only)')
 
 
 if __name__=='__main__':main()

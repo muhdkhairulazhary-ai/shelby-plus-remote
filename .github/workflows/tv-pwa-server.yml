@@ -39,6 +39,8 @@ jobs:
         with:
           packages: platform-tools
       - uses: gradle/actions/setup-gradle@v4
+      - name: Install dashboard QR decoder
+        run: python3 -m pip install opencv-python-headless==4.12.0.88
       - name: Install build dependencies
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Download public production OTA regression fixtures
@@ -55,6 +57,7 @@ jobs:
           cp app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk emulator-ota/baseline.apk
           app/gradle/gradlew -p app/gradle --no-daemon -I ../../dev/test/shelby-emulator.init.gradle :tvsetup:assembleDebug
           cp app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk app/tvsetup/build/generated/ota-probe/candidate.apk
+          cp app/tvsetup/VERSION app/tvsetup/build/generated/ota-probe/candidate-version.txt
           app/gradle/gradlew -p app/gradle --no-daemon -I ../../dev/test/shelby-emulator.init.gradle :tvsetup:assembleDebugAndroidTest
       - name: Enable emulator acceleration
         run: |
@@ -86,6 +89,7 @@ jobs:
             adb shell am start -n dev.tvremote.setup/.MainActivity
             adb forward tcp:8765 tcp:8765
             python3 dev/test/shelby_pwa_server.py > /tmp/shelby-pwa-server.txt 2>&1
+            python3 dev/test/shelby_dashboard_ui.py /tmp/shelby-dashboard-ui
             python3 dev/test/shelby_update_ui.py /tmp/shelby-update-ui > /tmp/shelby-update-ui.txt 2>&1
             timeout 10s adb logcat -d > /tmp/shelby-pwa-logcat.txt 2>/dev/null || true
       - name: Collect emulator evidence
@@ -94,6 +98,7 @@ jobs:
           mkdir -p evidence
           cp /tmp/shelby-pwa-server.txt evidence/ 2>/dev/null || true
           cp /tmp/shelby-pwa-logcat.txt evidence/logcat.txt 2>/dev/null || true
+          cp /tmp/shelby-dashboard-ui/* evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui.txt evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui/*.png evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui/*.xml evidence/ 2>/dev/null || true
