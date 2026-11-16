@@ -6,6 +6,8 @@ Three version numbers, each bumped only when its own part changes: `VERSION` (th
 
 ## Unreleased
 
+- Shelby+ TV 0.53.5: minimal OTA confirmation label and code 105305; preserve the 0.53.4 verifier fix and add minified Android installer/pairing-retention regressions.
+
 - Shelby+ TV 0.53.4: fix R8 stripping apksig ASN.1 schemas, add safe per-stage OTA diagnostics, and test real published APKs on a minified Android TV runtime. Older affected clients need a same-key external in-place update; never uninstall or clear data.
 
 - Shelby+ TV 0.53.3: minimal OTA test label and version bump to code 105303; production signing, package identity, pairing storage and updater remain unchanged.

@@ -9,11 +9,17 @@ import java.io.File
 
 /** Runs real published APK verification on Android, not only the JVM. Test APK/fixtures are never shipped. */
 class OtaProbeInstrumentation : Instrumentation() {
-    override fun onCreate(arguments: Bundle?) { super.onCreate(arguments); start() }
+    private var phase="verify"
+    override fun onCreate(arguments: Bundle?) { phase=arguments?.getString("phase") ?: "verify"; super.onCreate(arguments); start() }
     override fun onStart() {
         val trace = StringBuilder("Android SDK ${Build.VERSION.SDK_INT}\n")
         val result = Bundle()
         try {
+            if(phase=="persistence") {
+                OtaUpgradeProbe(this,trace).persistence()
+                result.putString("ota_status","PASS"); result.putString("ota_trace",trace.toString())
+                finish(Activity.RESULT_OK,result); return
+            }
             val old = JSONObject(context.assets.open("0.53.2/shelby-update.json").bufferedReader().use { it.readText() })
             val json = context.assets.open("0.53.3/shelby-update.json").bufferedReader().use { it.readText() }
             val pin = "fc3d3e8fc28694813921f70ece534eae1d2c00913cc8bdb711c5f4da0ef2ece5" // public production baseline
@@ -39,8 +45,9 @@ class OtaProbeInstrumentation : Instrumentation() {
             }
             check(runCatching { ShelbyApkIdentity.signers(apk,candidate.signer) }.isFailure)
             trace.append("wrong certificate and tampered APK rejected PASS\n")
-            result.putString("ota_status","PASS")
             apk.delete()
+            if(phase=="handoff") OtaUpgradeProbe(this,trace).handoff()
+            result.putString("ota_status","PASS")
         } catch (error: Throwable) {
             trace.append(error.javaClass.name).append(": ").append(error.message).append('\n')
             val writer = java.io.StringWriter()

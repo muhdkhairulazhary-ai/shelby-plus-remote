@@ -4,3 +4,5 @@
 # The separate instrumentation APK uses stdlib methods invisible to target-app R8 reachability.
 # Retain them only in this emulator fixture; do not change production Kotlin shrinking.
 -keep class kotlin.** { *; }
+
+-keep class dev.tvremote.setup.link.Paired** { *; }
