@@ -28,8 +28,12 @@ def main():
     from PIL import Image
     output = Path(sys.argv[1]); output.mkdir(parents=True, exist_ok=True)
     version = Path('app/tvsetup/VERSION').read_text().strip()
+    # The API 30 TV image's config_maxUiWidth caps its UI at 1920. The same native
+    # dashboard's genuine 4K canvas is checked separately on a large-screen Android AVD.
+    cases = [('4k',3840,2160,480)] if '--only-4k' in sys.argv else [
+        ('720p',1280,720,160), ('1080p',1920,1080,240), ('compact-1080p',1920,1080,320)]
     try:
-        for label, width, height, density in [('720p',1280,720,160), ('1080p',1920,1080,240), ('4k',3840,2160,480), ('compact-1080p',1920,1080,320)]:
+        for label, width, height, density in cases:
             adb('shell', 'wm', 'size', f'{width}x{height}')
             adb('shell', 'wm', 'density', str(density))
             (output/f'{label}-display.txt').write_bytes(adb('shell','wm','size') + adb('shell','wm','density'))

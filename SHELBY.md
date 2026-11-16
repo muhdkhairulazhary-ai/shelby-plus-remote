@@ -76,6 +76,9 @@ release workflow after review; validation APKs use disposable test certificates 
 are not production updates. No release is published by this change.
 
 `dev/test/shelby_dashboard_ui.py` captures the real native dashboard on an isolated
-Android TV emulator at 720p, 1080p, 4K and compact 1080p density, decodes its live QR
-and checks bounded D-pad focus. Physical PRISM+ rendering, remote performance and
+Android TV emulator at 720p, 1080p and compact 1080p density, decodes its live QR
+and checks bounded D-pad focus. The TV API 30 image caps UI width at 1920; a separate
+large-screen Android emulator checks the same APK’s two-column dashboard at an
+actual 3840×2160 canvas, without patching the TV system image. Screenshots assert
+their pixel dimensions; these emulator checks do not establish real 4K TV compatibility. Physical PRISM+ rendering, remote performance and
 camera scanning at viewing distance still require hardware testing.

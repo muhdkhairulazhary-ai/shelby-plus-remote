@@ -72,7 +72,7 @@ jobs:
         with:
           api-level: 30
           target: android-tv
-          # Android 11 clamps forced sizes to 2x the boot display. Boot at 1080p so 3840x2160 is testable.
+          # Explicit TV profile; this API 30 image caps UI width at 1920. Genuine 4K is checked below.
           profile: tv_1080p
           arch: x86
           disable-animations: true
@@ -123,3 +123,60 @@ jobs:
         with:
           name: tv-pwa-server-checks
           path: evidence/
+
+      - name: Share the minified emulator APK for native 4K layout validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: shelby-native-emulator-apk
+          path: app/tvsetup/build/generated/ota-probe/candidate.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  dashboard-4k:
+    needs: server
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - uses: actions/download-artifact@v4
+        with:
+          name: shelby-native-emulator-apk
+          path: emulator-apk
+      - name: Install screenshot QR decoder
+        run: python3 -m pip install Pillow==12.0.0 zxing-cpp==2.3.0
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      # The Android TV image's config_maxUiWidth=1920 prevents native 4K screenshots.
+      # A tablet-sized Android display takes MainActivity's existing two-column dashboard path.
+      # No system image, launcher, feature flag or production code is patched to bypass that limit.
+      - name: Check actual 3840x2160 native dashboard canvas
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: default
+          profile: pixel_c
+          arch: x86
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -skin 1920x1080
+          script: |
+            adb install emulator-apk/candidate.apk
+            python3 dev/test/shelby_dashboard_ui.py /tmp/shelby-dashboard-4k --only-4k
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shelby-native-dashboard-4k
+          path: /tmp/shelby-dashboard-4k/
+          if-no-files-found: error
