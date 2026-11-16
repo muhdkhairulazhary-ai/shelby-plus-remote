@@ -68,7 +68,8 @@ jobs:
             adb shell wm density 160
             adb install app/tvsetup/build/outputs/apk/debug/tvsetup-debug.apk
             adb install app/tvsetup/build/outputs/apk/androidTest/debug/tvsetup-debug-androidTest.apk
-            adb shell am instrument -w dev.tvremote.setup.test/dev.tvremote.setup.update.OtaProbeInstrumentation > /tmp/shelby-ota-probe.txt 2>&1
+            timeout 90s adb shell am instrument -w dev.tvremote.setup.test/dev.tvremote.setup.update.OtaProbeInstrumentation > /tmp/shelby-ota-probe.txt 2>&1 || true
+            timeout 10s adb logcat -d > /tmp/shelby-ota-logcat.txt 2>/dev/null || true
             cat /tmp/shelby-ota-probe.txt
             python3 -c "from pathlib import Path; assert 'ota_status=PASS' in Path('/tmp/shelby-ota-probe.txt').read_text()"
             adb shell am start -n dev.tvremote.setup/.MainActivity
@@ -85,6 +86,7 @@ jobs:
           cp /tmp/shelby-update-ui.txt evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui/*.png evidence/ 2>/dev/null || true
           cp /tmp/shelby-update-ui/*.xml evidence/ 2>/dev/null || true
+          cp /tmp/shelby-ota-logcat.txt evidence/ota-logcat.txt 2>/dev/null || true
           cp /tmp/shelby-ota-probe.txt evidence/ 2>/dev/null || true
           cat evidence/shelby-ota-probe.txt 2>/dev/null || true
           cat evidence/shelby-update-ui.txt 2>/dev/null || true
